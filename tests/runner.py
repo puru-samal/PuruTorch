@@ -105,6 +105,18 @@ test_list = {
             'handler': test_tensor_matmul_backward,
             'value': 1,
         },
+        {
+            'name':    'Tensor Slice Forward',
+            'autolab': 'Tensor Slice Forward',
+            'handler': test_tensor_slice_forward,
+            'value': 1,
+        },
+        {
+            'name':    'Tensor Slice Backward',
+            'autolab': 'Tensor Slice Backward',
+            'handler': test_tensor_slice_backward,
+            'value': 1,
+        },
     ],
 }
 

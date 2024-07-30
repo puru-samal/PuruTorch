@@ -66,7 +66,6 @@ def test_tensor_2op_forward(test_name, op):
 
 
 def test_tensor_2op_backward(test_name, op):
-
     for i in range(1, 4):
         j = np.random.randint(2, 6)
 
@@ -189,7 +188,6 @@ def test_tensor_1op_forward(test_name, op):
 
 
 def test_tensor_1op_backward(test_name, op):
-
     for i in range(1, 4):
         j = np.random.randint(2, 6)
 
@@ -247,6 +245,128 @@ def test_tensor_1op_backward(test_name, op):
     return True
 
 
+def test_tensor_slice_forward_(test_name):
+    for i in range(2, 5):
+        j = np.random.randint(2, 6)
+
+        k = np.random.randint(0, i)
+        l = np.random.randint(0, j)
+
+        print(f"** test{i-1}:", end=' ')
+
+        #np
+        npx = np.random.uniform(0.1, 1.0, size=(i,j))
+        npy = np.random.uniform(0.1, 1.0, size=(j,i))
+
+        #user
+        usr_x = PuruTorch.Tensor.tensor(npx)
+        usr_y = PuruTorch.Tensor.tensor(npy)
+
+        #pytorch
+        pyt_x = torch.from_numpy(npx)
+        pyt_y = torch.from_numpy(npy)
+        
+        name = test_name        
+        usr_result = usr_x[k, l]
+        pyt_result = pyt_x[k, l]
+        cmp1 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+        
+        
+        name = test_name        
+        usr_result = usr_y[l, k]
+        pyt_result = pyt_y[l, k]
+        cmp2 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+            
+        name = test_name        
+        usr_result = usr_x[k, :]
+        pyt_result = pyt_x[k, :]
+        cmp3 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+        
+        name = test_name        
+        usr_result = usr_y[l, :]
+        pyt_result = pyt_y[l, :]
+        cmp4 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+        
+        name = test_name        
+        usr_result = usr_x[:k, :l]
+        pyt_result = pyt_x[:k, :l]
+        cmp5 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+        
+        name = test_name        
+        usr_result = usr_y[:l, :k]
+        pyt_result = pyt_y[:l, :k]
+        cmp6 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+        
+
+        if not (cmp1 and cmp2 and cmp3 and cmp4 and cmp5 and cmp6):
+            print("failed!")
+            return False
+        else:
+            print("passed!")
+
+    return True
+
+
+def test_tensor_slice_backward_(test_name):
+    for i in range(3, 6):
+        j = np.random.randint(2, 6)
+
+        k = np.random.randint(0, i)
+        l = np.random.randint(0, j)
+
+        print(f"** test{i-2}:", end=' ')
+
+        #np
+        npx = np.random.uniform(0.1, 1.0, size=(i,j))
+        npy = np.random.uniform(0.1, 1.0, size=(j,i))
+
+        #user
+        usr_x = PuruTorch.Tensor.tensor(npx, requires_grad=True)
+        usr_y = PuruTorch.Tensor.tensor(npy, requires_grad=True)
+
+        #pytorch
+        pyt_x = torch.from_numpy(npx).requires_grad_()
+        pyt_y = torch.from_numpy(npy).requires_grad_()
+        
+        name = test_name        
+        usr_result = usr_x[:k, :l] @ usr_y[:l, :k]
+        usr_result.backward(grad=PuruTorch.Tensor.ones_like(usr_result))
+
+        pyt_result = pyt_x[:k, :l] @ pyt_y[:l, :k]
+        pyt_result.backward(gradient=torch.ones_like(pyt_result))
+
+        cmp1 = (cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'type',      name+': x_grad')
+            and cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'shape',     name+': x_grad')
+            and cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'closeness', name+': x_grad'))
+        
+        cmp2 = (cmp_usr_pyt_tensor(usr_y.grad, pyt_y.grad, 'type',      name+': x_grad')
+            and cmp_usr_pyt_tensor(usr_y.grad, pyt_y.grad, 'shape',     name+': x_grad')
+            and cmp_usr_pyt_tensor(usr_y.grad, pyt_y.grad, 'closeness', name+': x_grad'))
+        
+
+        if not (cmp1 and cmp2):
+            print("failed!")
+            return False
+        else:
+            print("passed!")
+
+    return True
+
+
+
+
 ## Operator Tests
 def test_tensor_add_forward():
     return test_tensor_2op_forward("add", lambda a,b: a+b)
@@ -295,3 +415,10 @@ def test_tensor_matmul_forward():
 
 def test_tensor_matmul_backward():
     return test_tensor_2op_backward("matmul", lambda a,b: a @ b)
+
+def test_tensor_slice_forward():
+    return test_tensor_slice_forward_("slice")
+
+def test_tensor_slice_backward():
+    return test_tensor_slice_backward_("slice")
+
