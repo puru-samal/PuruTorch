@@ -41,10 +41,10 @@ class Tensor :
         gf_str = f"grad_fn={self.grad_fn.__class__.__name__}.backward," if self.grad_fn is not None else ""
         return f"Tensor({self.data}, {dt_str}, {rg_str} {gf_str})"
     
-    def backward(self, grad : Optional['Tensor'] = None):
+    def backward(self, grad : Optional['Tensor'] = None) -> None:
         """
-        Updates Tensor's grad attribute and calles the backward methods on the 
-        Tensor's used to create it.
+        Updates Tensor's grad attribute and recursively calls the backward methods on the 
+        Tensor's used to create it (children).
         Args:
             grad (Tensor, optional): Gradient of output. Defaults to None.
 
@@ -109,3 +109,21 @@ class Tensor :
         given Tensor instance filled with ones.
         """    
         return Tensor(np.ones_like(tensor.data), requires_grad)
+    
+    @staticmethod
+    def random_uniform(lo : float, hi : float, size = Tuple[int, ...], requires_grad = False) -> 'Tensor' :
+        """
+        Create's a Tensor by filled with samples drawn from a uniform distribution.
+        """        
+        return Tensor(np.random.uniform(lo, hi, size), requires_grad)
+
+# ------------------------------------------
+# Parameter Class
+# ------------------------------------------
+
+class Parameter(Tensor):
+    """
+    A Tensor subclass that will always track gradients. 
+    """    
+    def __init__(self, data: np.ndarray, requires_grad: bool = True, op: Function | None = None):
+        super().__init__(data, requires_grad, op)

@@ -4,6 +4,7 @@
 import numpy as np
 from .tensor import Tensor
 from .utils import Function, unbroadcast
+from typing import Tuple, List, Union, Optional
 
 # ------------------------------------------
 # Tensor Functions
@@ -13,7 +14,7 @@ class Add(Function):
     """
     Tensor addition operation.
     """    
-    def forward(self, a, b):
+    def forward(self, a : Tensor, b : Tensor) -> Tensor:
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
         if not isinstance(b, Tensor):
@@ -22,10 +23,9 @@ class Add(Function):
         self.ctx.save_for_backward(a, b)
         requires_grad = a.requires_grad or b.requires_grad
         data = a.data + b.data
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a, b = self.ctx.saved_tensors
         a_grad = unbroadcast(grad_output.data, a.shape)
         b_grad = unbroadcast(grad_output.data, b.shape)
@@ -36,17 +36,16 @@ class Neg(Function):
     """
     Tensor negation operation.
     """    
-    def forward(self, a):
+    def forward(self, a : Tensor) -> Tensor:
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
 
         self.ctx.save_for_backward(a)
         requires_grad = a.requires_grad 
         data = -a.data
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a = self.ctx.saved_tensors[0]
         a_grad = unbroadcast(-grad_output.data, a.shape)
         return [Tensor.tensor(a_grad)]
@@ -56,7 +55,7 @@ class Sub(Function):
     """
     Tensor subtraction operation.
     """    
-    def forward(self, a, b):
+    def forward(self, a : Tensor, b : Tensor) -> Tensor:
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
         if not isinstance(b, Tensor):
@@ -65,10 +64,9 @@ class Sub(Function):
         self.ctx.save_for_backward(a, b)
         requires_grad = a.requires_grad or b.requires_grad
         data = a.data - b.data
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a, b = self.ctx.saved_tensors
         a_grad = unbroadcast(grad_output.data, a.shape)
         b_grad = unbroadcast(-grad_output.data, b.shape)
@@ -79,7 +77,7 @@ class Mul(Function):
     """
     Tensor multiplication operation.
     """    
-    def forward(self, a, b):
+    def forward(self, a : Tensor, b : Tensor) -> Tensor:
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
         if not isinstance(b, Tensor):
@@ -88,10 +86,9 @@ class Mul(Function):
         self.ctx.save_for_backward(a, b)
         requires_grad = a.requires_grad or b.requires_grad
         data = a.data * b.data
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a, b = self.ctx.saved_tensors
         a_grad = unbroadcast(grad_output.data * b.data, a.shape)
         b_grad = unbroadcast(grad_output.data * a.data, b.shape)
@@ -102,7 +99,7 @@ class Pow(Function):
     """
     Tensor power operation.
     """    
-    def forward(self, a, exponent):
+    def forward(self, a : Tensor, exponent : Union[int, float, Tensor]) -> Tensor:
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
         if not isinstance(exponent, Tensor):
@@ -111,11 +108,10 @@ class Pow(Function):
         self.ctx.exponent = exponent
         self.ctx.save_for_backward(a)
         requires_grad = a.requires_grad
-        data = a.data**exponent.data
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        data = a.data**exponent.data 
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a = self.ctx.saved_tensors[0]
         exponent = self.ctx.exponent
         a_grad = unbroadcast(grad_output.data * (exponent.data * (a.data**(exponent.data-1))), a.shape)
@@ -126,7 +122,7 @@ class Div(Function):
     """
     Tensor division operation.
     """    
-    def forward(self, a, b):
+    def forward(self, a : Tensor, b : Tensor) -> Tensor:
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
         if not isinstance(b, Tensor):
@@ -135,40 +131,20 @@ class Div(Function):
         self.ctx.save_for_backward(a, b)
         requires_grad = a.requires_grad or b.requires_grad
         data = a.data / b.data
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a, b = self.ctx.saved_tensors
         a_grad = unbroadcast(grad_output.data * (1 / b.data), a.shape)
         b_grad = unbroadcast(grad_output.data * (-a.data /(b.data**2.0)), b.shape)
         return [Tensor.tensor(a_grad), Tensor.tensor(b_grad)]
 
 
-class Transpose(Function):
-    """
-    Tensor multiplication operation.
-    """    
-    def forward(self, a):
-        if not isinstance(a, Tensor):
-            print(f"Can't transpose a non-Tensor. Recieved {a} of type: {type(a)}")
-        self.ctx.save_for_backward(a)
-        requires_grad = a.requires_grad
-        data = a.data.T
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
-    
-    def backward(self, grad_output):
-        a = self.ctx.saved_tensors[0]
-        a_grad = unbroadcast(grad_output.data.T, a.shape)
-        return [Tensor.tensor(a_grad)]
-
-
 class MatMul(Function):
     """
     Tensor multiplication operation.
     """    
-    def forward(self, a, b):
+    def forward(self, a : Tensor, b : Tensor):
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
         if not isinstance(b, Tensor):
@@ -177,10 +153,9 @@ class MatMul(Function):
         self.ctx.save_for_backward(a, b)
         requires_grad = a.requires_grad or b.requires_grad
         data = a.data @ b.data
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a, b = self.ctx.saved_tensors
         a_grad = unbroadcast(grad_output.data @ b.data.T, a.shape)
         b_grad = unbroadcast(a.data.T @ grad_output.data  , b.shape)
@@ -191,7 +166,7 @@ class Slice(Function):
     """
     Tensor Slice operation.
     """    
-    def forward(self, a, key):
+    def forward(self, a : Tensor, key : Tuple[slice, ...]) -> Tensor:
         if not isinstance(a, Tensor):
             raise ValueError(f"Called slice on non-Tensor. Recieved {a} of type: {type(a)}")
 
@@ -199,32 +174,109 @@ class Slice(Function):
         self.ctx.key = key
         requires_grad = a.requires_grad
         data = a.data[key]
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a = self.ctx.saved_tensors[0]
         a_grad = np.zeros_like(a.data)
         if grad_output.data.size != 0 and a_grad[self.ctx.key].size != 0:
            a_grad[self.ctx.key] = grad_output.data
         return [Tensor.tensor(a_grad)]
 
+class Reshape(Function):
+    """
+    Tensor Reshape operation.
+    """    
+    def forward(self, a : Tensor, shape : Tuple[int, ...]) -> Tensor:
+        if not isinstance(a, Tensor):
+            raise ValueError(f"Called slice on non-Tensor. Recieved {a} of type: {type(a)}")
+
+        self.ctx.save_for_backward(a)
+        self.ctx.shape = a.shape
+        requires_grad = a.requires_grad
+        data = a.data.reshape(shape)
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
+        a_grad = grad_output.data.reshape(self.ctx.shape)
+        return [Tensor.tensor(a_grad)]
+
+
+class Squeeze(Function):
+    """
+    Tensor Squeeze operation.
+    """    
+    def forward(self, a : Tensor, axis : int) -> Tensor:
+        if not isinstance(a, Tensor):
+            raise ValueError(f"Called slice on non-Tensor. Recieved {a} of type: {type(a)}")
+
+        self.ctx.save_for_backward(a)
+        self.ctx.axis = axis
+        requires_grad = a.requires_grad
+        data = np.squeeze(a.data, axis=axis)
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
+        a = self.ctx.saved_tensors[0]
+        a_grad = grad_output.data
+        if a.shape != a_grad.shape:
+            a_grad = np.expand_dims(a_grad, axis=self.ctx.axis)
+        return [Tensor.tensor(a_grad)]
+
+
+class Unsqueeze(Function):
+    """
+    Tensor Unsqueeze operation.
+    """    
+    def forward(self, a : Tensor, axis : int) -> Tensor:
+        if not isinstance(a, Tensor):
+            raise ValueError(f"Called slice on non-Tensor. Recieved {a} of type: {type(a)}")
+        self.ctx.save_for_backward(a)
+        self.ctx.axis = axis
+        requires_grad = a.requires_grad
+        data = np.expand_dims(a.data, axis=axis)
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
+        a = self.ctx.saved_tensors[0]
+        a_grad = grad_output.data
+        if a.shape != a_grad.shape:
+            a_grad = np.squeeze(a_grad, axis=self.ctx.axis)
+        return [Tensor.tensor(a_grad)]
+    
+
+class Transpose(Function):
+    """
+    Tensor multiplication operation.
+    """    
+    def forward(self, a : Tensor) -> Tensor:
+        if not isinstance(a, Tensor):
+            print(f"Can't transpose a non-Tensor. Recieved {a} of type: {type(a)}")
+        self.ctx.save_for_backward(a)
+        requires_grad = a.requires_grad
+        data = a.data.T
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
+        a = self.ctx.saved_tensors[0]
+        a_grad = unbroadcast(grad_output.data.T, a.shape)
+        return [Tensor.tensor(a_grad)]
+    
 
 class Log(Function):
     """
     Tensor log operation.
     """    
-    def forward(self, a):
+    def forward(self, a : Tensor) -> Tensor:
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
 
         self.ctx.save_for_backward(a)
         requires_grad = a.requires_grad
         data = np.log(a.data)
-        out = Tensor(data, requires_grad, self if requires_grad else None)
-        return out
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output):
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
         a = self.ctx.saved_tensors[0]
         a_grad = grad_output.data * (1/a.data)
         return [Tensor.tensor(a_grad)]
@@ -234,21 +286,73 @@ class Exp(Function):
     """
     Tensor exp operation.
     """    
-    def forward(self, a):
+    def forward(self, a : Tensor) -> Tensor:
         if not isinstance(a, Tensor):
             a = Tensor.tensor(np.array(a))
 
         self.ctx.save_for_backward(a)
-        
         requires_grad = a.requires_grad
         data = np.exp(a.data)
         out = Tensor(data, requires_grad, self if requires_grad else None)
-        self.output = out # use in backward
+        self.ctx.output = out # use in backward
         return out
     
-    def backward(self, grad_output):
-        a_grad = grad_output.data * self.output.data
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
+        a_grad = grad_output.data * self.ctx.output.data
         return [Tensor.tensor(a_grad)]
+
+
+class Max(Function):
+    """
+    Tensor Max operation.
+    """    
+    def forward(self, a : Tensor, axis : Optional[int] = None, keepdims : bool = False ) -> Tensor:
+        if not isinstance(a, Tensor):
+            a = Tensor.tensor(np.array(a))
+
+        self.ctx.save_for_backward(a)
+        self.ctx.axis = axis
+        self.ctx.keepdims = keepdims
+        requires_grad = a.requires_grad
+        data = np.max(a.data, axis=axis, keepdims=keepdims)
+        self.ctx.max = data
+        out = Tensor(data, requires_grad, self if requires_grad else None)
+        return out
+    
+    def backward(self, grad_output : Tensor) -> List[Tensor]:
+        a = self.ctx.saved_tensors[0]
+
+        if not self.ctx.keepdims: # broadcast if not keepdims
+            if self.ctx.axis is None: # scalar
+                self.ctx.max = self.ctx.max * np.ones_like(a.data)
+                a_grad = grad_output.data * np.ones_like(a.data)
+            else:
+                self.ctx.max = np.expand_dims(self.ctx.max, self.ctx.axis) * np.ones_like(a.data)
+                a_grad = np.expand_dims(grad_output.data, self.ctx.axis) * np.ones_like(a.data)
+        
+        a_grad = a_grad * np.where(a.data == self.ctx.max, 1.0, 0.0)
+        return [Tensor.tensor(a_grad)]
+
+
+class Sum(Function):
+    """
+    Tensor Max operation.
+    """    
+    def forward(self, a : Tensor, axis : Optional[int] = None, keepdims : bool = False) -> Tensor:
+        if not isinstance(a, Tensor):
+            a = Tensor.tensor(np.array(a))
+
+        self.ctx.save_for_backward(a)
+        requires_grad = a.requires_grad
+        data = np.sum(a.data, axis=axis, keepdims=keepdims)
+        out = Tensor(data, requires_grad, self if requires_grad else None)
+        return out
+    
+    def backward(self, grad_output : Tensor) -> Tensor:
+        a = self.ctx.saved_tensors[0]
+        a_grad = grad_output.data * np.ones_like(a.data)
+        return [Tensor.tensor(a_grad)]
+
 
 # ------------------------------------------
 # Tensor Bindings
@@ -269,16 +373,10 @@ Tensor.__truediv__ = lambda self, other : Div()(self, other)
 Tensor.__matmul__  = lambda self, other : MatMul()(self, other)
 Tensor.__getitem__ = lambda self, key : Slice()(self, key)
 Tensor.T    = property(lambda self : Transpose()(self))
-Tensor.reshape    = lambda self : "NOT IMPLEMENTED!"
-Tensor.squeeze    = lambda self : "NOT IMPLEMENTED!"
-Tensor.unsqueeze  = lambda self : "NOT IMPLEMENTED!"
-Tensor.cat    = lambda self : "NOT IMPLEMENTED!"
-Tensor.stack  = lambda self : "NOT IMPLEMENTED!"
-Tensor.masked_fill = lambda self : "NOT IMPLEMENTED!"
+Tensor.reshape    = lambda self, *shape : Reshape()(self, shape)
+Tensor.squeeze    = lambda self, axis : Squeeze()(self, axis)
+Tensor.unsqueeze  = lambda self, axis : Unsqueeze()(self, axis)
 Tensor.log  = lambda self : Log()(self)
 Tensor.exp  = lambda self : Exp()(self)
-Tensor.max  = lambda self : "NOT IMPLEMENTED!"
-Tensor.mean = lambda self : "NOT IMPLEMENTED!"
-Tensor.var  = lambda self : "NOT IMPLEMENTED!"
-Tensor.sum  = lambda self : "NOT IMPLEMENTED!"
-Tensor.tanh = lambda self : "NOT IMPLEMENTED!"
+Tensor.max  = lambda self, axis=None, keepdims=False : Max()(self, axis, keepdims)
+Tensor.sum  = lambda self, axis=None, keepdims=False : Sum()(self, axis, keepdims)

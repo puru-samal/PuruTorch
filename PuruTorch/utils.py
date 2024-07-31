@@ -1,5 +1,6 @@
 
 import numpy as np
+from typing import Tuple
 
 class ContextManager:
     """
@@ -12,7 +13,7 @@ class ContextManager:
     def __init__(self):
         self.saved_tensors = []
     
-    def save_for_backward(self, *args):
+    def save_for_backward(self, *args) -> None:
         """
         Save Tensor's during forward pass.
         """        
@@ -21,7 +22,7 @@ class ContextManager:
                 raise ValueError(f"Only Tensors can be saved. Recieved {arg} of type: {type(arg)} instead.")
             self.saved_tensors.append(arg)
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clear context. To be used during zero_grad.
         """        
@@ -40,15 +41,19 @@ class Function:
         return self.forward(*args)
         
     def forward(self, *args):
+        if self.debug:
+            print("")
+            print(self.__class__.__name__+"_forward")
         return
     
     def backward(self, *args):
         if self.debug:
             print("")
             print(self.__class__.__name__+"_backward")
+        return
 
 
-def unbroadcast(tensor_data : np.ndarray, shape_to_match, to_keep=0):
+def unbroadcast(tensor_data : np.ndarray, shape_to_match : Tuple[int, ...], to_keep=0) -> np.ndarray:
     """
     Helper function to handle broadcasting.
     """
