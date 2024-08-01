@@ -5,6 +5,7 @@ from    pathlib import Path
 from    helpers import *
 from    test_tensor import *
 from    test_linear import *
+from    test_activations import *
 
 import  PuruTorch
 
@@ -205,15 +206,15 @@ test_list = {
     ],
     'nn': [
         {
-            'name':    'Linear Forward',
-            'autolab': 'Linear Forward',
-            'handler': test_linear_forward,
+            'name':    'Linear Forward/Backward',
+            'autolab': 'Linear Forward/Backward',
+            'handler': test_linear,
             'value': 1,
         },
         {
-            'name':    'Linear Backward',
-            'autolab': 'Linear Backward',
-            'handler': test_linear_backward,
+            'name':    'Activations Forward/Backward',
+            'autolab': 'Activations Forward/Backward',
+            'handler': test_activations,
             'value': 1,
         },
     ]

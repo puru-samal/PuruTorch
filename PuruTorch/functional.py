@@ -294,11 +294,11 @@ class Exp(Function):
         requires_grad = a.requires_grad
         data = np.exp(a.data)
         out = Tensor(data, requires_grad, self if requires_grad else None)
-        self.ctx.output = out # use in backward
+        self.ctx.fwd_out = out # use in backward
         return out
     
     def backward(self, grad_output: Tensor) -> List[Tensor]:
-        a_grad = grad_output.data * self.ctx.output.data
+        a_grad = grad_output.data * self.ctx.fwd_out.data
         return [Tensor.tensor(a_grad)]
 
 
@@ -316,7 +316,7 @@ class Max(Function):
 
         requires_grad = a.requires_grad
         data = np.max(a.data, axis=axis, keepdims=keepdims)
-        self.ctx.max = data
+        self.ctx.fwd_out = data
         out = Tensor(data, requires_grad, self if requires_grad else None)
         return out
     
@@ -324,15 +324,16 @@ class Max(Function):
         a = self.ctx.saved_tensors[0]
 
         # broadcast if not keepdims
-        if not self.ctx.keepdims: 
-            if self.ctx.axis is None: # scalar
-                self.ctx.max = self.ctx.max * np.ones_like(a.data)
-                a_grad = grad_output.data * np.ones_like(a.data)
-            else: # else axis reduction
-                self.ctx.max = np.expand_dims(self.ctx.max, self.ctx.axis) * np.ones_like(a.data)
-                a_grad = np.expand_dims(grad_output.data, self.ctx.axis) * np.ones_like(a.data)
+        if not self.ctx.keepdims:
+            # if scalar, broadcast max,grad to original shape 
+            if self.ctx.axis is None: 
+                self.ctx.fwd_out = self.ctx.fwd_out * np.ones_like(a.data)
+                g_out = grad_output.data * np.ones_like(a.data)
+            else: # else axis reduction, expand then broadcast
+                self.ctx.fwd_out = np.expand_dims(self.ctx.fwd_out, self.ctx.axis) * np.ones_like(a.data)
+                g_out = np.expand_dims(grad_output.data, self.ctx.axis) * np.ones_like(a.data)
         
-        a_grad = a_grad * np.where(a.data == self.ctx.max, 1.0, 0.0)
+        a_grad = g_out * np.where(a.data == self.ctx.fwd_out, 1.0, 0.0)
         return [Tensor.tensor(a_grad)]
 
 
@@ -356,13 +357,141 @@ class Sum(Function):
     def backward(self, grad_output: Tensor) -> Tensor:
         a = self.ctx.saved_tensors[0]
 
-        # if asix reduction happened
-        if not self.ctx.keepdims and self.ctx.axis is not None: 
+        # if axis reduction happened
+        if not self.ctx.keepdims and self.ctx.axis is not None:
+            # expand reduced axis 
             a_grad = np.expand_dims(grad_output.data, self.ctx.axis)
         else:
             a_grad = grad_output.data
 
         a_grad = a_grad * np.ones_like(a.data)
+        return [Tensor.tensor(a_grad)]
+
+
+class Identity(Function):
+    """
+    Tensor Identity operation.
+    """  
+    def forward(self, a: Tensor) -> Tensor:
+        if not isinstance(a, Tensor):
+            a = Tensor.tensor(np.array(a))
+        
+        self.ctx.save_for_backward(a)
+        requires_grad = a.requires_grad
+        data = a.data
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output: Tensor) -> Tensor:
+        a_grad = grad_output.data
+        return [Tensor.tensor(a_grad)]
+    
+
+class Sigmoid(Function):
+    """
+    Tensor Sigmoid operation.
+    """  
+    def forward(self, a: Tensor) -> Tensor:
+        if not isinstance(a, Tensor):
+            a = Tensor.tensor(np.array(a))
+        
+        self.ctx.save_for_backward(a)
+        requires_grad = a.requires_grad
+        data = 1 / (1 + np.exp(-a.data))
+        self.ctx.fwd_out = data
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output: Tensor) -> Tensor:
+        a_grad = grad_output.data * (self.ctx.fwd_out - self.ctx.fwd_out**2)
+        return [Tensor.tensor(a_grad)]
+    
+
+class Tanh(Function):
+    """
+    Tensor Tanh operation.
+    """  
+    def forward(self, a: Tensor) -> Tensor:
+        if not isinstance(a, Tensor):
+            a = Tensor.tensor(np.array(a))
+        
+        self.ctx.save_for_backward(a)
+        requires_grad = a.requires_grad
+        data = np.tanh(a.data)
+        self.ctx.fwd_out = data
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output: Tensor) -> Tensor:
+        a_grad = grad_output.data * (1 - self.ctx.fwd_out**2)
+        return [Tensor.tensor(a_grad)]
+
+
+class ReLU(Function):
+    """
+    Tensor ReLU operation.
+    """  
+    def forward(self, a: Tensor) -> Tensor:
+        if not isinstance(a, Tensor):
+            a = Tensor.tensor(np.array(a))
+        
+        self.ctx.save_for_backward(a)
+        requires_grad = a.requires_grad
+        data = np.maximum(0, a.data)
+        self.ctx.fwd_out = data
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output: Tensor) -> Tensor:
+        a_grad = grad_output.data * np.where(self.ctx.fwd_out > 0.0, 1.0, 0.0)
+        return [Tensor.tensor(a_grad)]
+
+
+# Not Implemented
+class Softmax(Function):
+    """
+    Tensor Softmax operation.
+    NOTE: Softmax is taken over the last axis, so inputs must be (*, num_classes)
+    """  
+    def forward(self, a: Tensor) -> Tensor:
+        if not isinstance(a, Tensor):
+            a = Tensor.tensor(np.array(a))
+        
+        self.ctx.save_for_backward(a)
+        requires_grad = a.requires_grad
+        self.ctx.is_batched = a.ndim == 2
+
+        if not self.ctx.is_batched:
+            a_data = a.data.reshape(1, -1) # (k,) -> (1, k)
+        else:
+            a_data = a.data # (N, k)
+            
+        data = np.exp(a_data) / np.sum(np.exp(a_data), axis=-1).reshape(-1, 1) # (N, k)
+        
+        if not self.ctx.is_batched:
+            data = data.reshape(-1) # (1,k) -> (k,)
+        
+        self.ctx.fwd_out = data # Use to calculate the jacobian
+        return Tensor(data, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output: Tensor) -> Tensor:
+        
+        if not self.ctx.is_batched:
+            fwd_data = self.ctx.fwd_out.reshape(1, -1)
+            g_out    = grad_output.data.reshape(1, -1)
+        else:
+            fwd_data = self.ctx.fwd_out
+            g_out    = grad_output.data
+
+        # shape: (N, C, 1) * (N, 1, C) -> (N, C, C)
+        # elem: -a_i * a_j 
+        jacobian = -fwd_data[..., None] * fwd_data[:, None, :]
+        di, dj = np.diag_indices_from(jacobian[0])
+
+        # replace diag elems: a_i * (1 - a_i)
+        jacobian[:, di, dj] = fwd_data * (1. - fwd_data)
+
+        # (N, C) , (N, C, C)
+        a_grad = np.tensordot(g_out, jacobian, axes=(-1,-2))
+
+        if not self.ctx.is_batched:
+            a_grad = a_grad.reshape(-1)
         return [Tensor.tensor(a_grad)]
 
 

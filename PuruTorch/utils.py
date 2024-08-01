@@ -33,7 +33,7 @@ class Function:
     """
     Superclass for all tensor operation types.
     """    
-    def __init__(self, debug=True) -> None:
+    def __init__(self, debug=False) -> None:
         self.ctx = ContextManager()
         self.debug = debug
     
@@ -41,12 +41,14 @@ class Function:
         return self.forward(*args)
         
     def forward(self, *args):
+        # Call super().foward() to enable debugging
         if self.debug:
             print("")
             print(self.__class__.__name__+"_forward")
         return
     
     def backward(self, *args):
+        # Call super().backward to enable debugging
         if self.debug:
             print("")
             print(self.__class__.__name__+"_backward")
