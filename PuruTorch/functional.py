@@ -313,6 +313,7 @@ class Max(Function):
         self.ctx.save_for_backward(a)
         self.ctx.axis = axis
         self.ctx.keepdims = keepdims
+
         requires_grad = a.requires_grad
         data = np.max(a.data, axis=axis, keepdims=keepdims)
         self.ctx.max = data
@@ -322,11 +323,12 @@ class Max(Function):
     def backward(self, grad_output: Tensor) -> List[Tensor]:
         a = self.ctx.saved_tensors[0]
 
-        if not self.ctx.keepdims: # broadcast if not keepdims
+        # broadcast if not keepdims
+        if not self.ctx.keepdims: 
             if self.ctx.axis is None: # scalar
                 self.ctx.max = self.ctx.max * np.ones_like(a.data)
                 a_grad = grad_output.data * np.ones_like(a.data)
-            else:
+            else: # else axis reduction
                 self.ctx.max = np.expand_dims(self.ctx.max, self.ctx.axis) * np.ones_like(a.data)
                 a_grad = np.expand_dims(grad_output.data, self.ctx.axis) * np.ones_like(a.data)
         
@@ -343,6 +345,9 @@ class Sum(Function):
             a = Tensor.tensor(np.array(a))
 
         self.ctx.save_for_backward(a)
+        self.ctx.axis = axis
+        self.ctx.keepdims = keepdims
+
         requires_grad = a.requires_grad
         data = np.sum(a.data, axis=axis, keepdims=keepdims)
         out = Tensor(data, requires_grad, self if requires_grad else None)
@@ -350,7 +355,14 @@ class Sum(Function):
     
     def backward(self, grad_output: Tensor) -> Tensor:
         a = self.ctx.saved_tensors[0]
-        a_grad = grad_output.data * np.ones_like(a.data)
+
+        # if asix reduction happened
+        if not self.ctx.keepdims and self.ctx.axis is not None: 
+            a_grad = np.expand_dims(grad_output.data, self.ctx.axis)
+        else:
+            a_grad = grad_output.data
+
+        a_grad = a_grad * np.ones_like(a.data)
         return [Tensor.tensor(a_grad)]
 
 
