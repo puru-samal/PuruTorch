@@ -12,7 +12,7 @@ class Tensor :
     Implemented as wrapper around the np.ndarray class to facilitate gradient tracking.
     """    
 
-    def __init__(self, data : np.ndarray, requires_grad : bool = False, op : Optional[Function] = None):
+    def __init__(self, data: np.ndarray, requires_grad: bool = False, op: Optional[Function] = None):
         """ 
         Args:
             data (np.ndarray): The underlying np.ndarray
@@ -41,7 +41,7 @@ class Tensor :
         gf_str = f"grad_fn={self.grad_fn.__class__.__name__}.backward," if self.grad_fn is not None else ""
         return f"Tensor({self.data}, {dt_str}, {rg_str} {gf_str})"
     
-    def backward(self, grad : Optional['Tensor'] = None) -> None:
+    def backward(self, grad: Optional['Tensor'] = None) -> None:
         """
         Updates Tensor's grad attribute and recursively calls the backward methods on the 
         Tensor's used to create it (children).
@@ -74,28 +74,28 @@ class Tensor :
     # ------------------------------------------
 
     @staticmethod
-    def tensor(data : np.ndarray, requires_grad = False) -> 'Tensor':
+    def tensor(data: np.ndarray, requires_grad: bool = False) -> 'Tensor':
         """
         Creates an instance of a Tensor class containing 'data'
         """    
         return Tensor(data, requires_grad)
 
     @staticmethod
-    def zeros(shape : Tuple[int, ...], requires_grad = False) -> 'Tensor':
+    def zeros(shape: Tuple[int, ...], requires_grad: bool = False) -> 'Tensor':
         """
         Creates an instance of a Tensor class filled with zeros.
         """    
         return Tensor(np.zeros(shape), requires_grad)
 
     @staticmethod
-    def ones(shape : Tuple[int, ...], requires_grad = False) -> 'Tensor':
+    def ones(shape: Tuple[int, ...], requires_grad: bool = False) -> 'Tensor':
         """
         Creates an instance of a Tensor class filled with zeros.
         """    
         return Tensor(np.ones(shape), requires_grad)
 
     @staticmethod
-    def zeros_like(tensor : 'Tensor', requires_grad = False) -> 'Tensor':
+    def zeros_like(tensor: 'Tensor', requires_grad: bool = False) -> 'Tensor':
         """
         Creates an instance of a Tensor class of the same shape as the
         given Tensor instance filled with zeros.
@@ -103,7 +103,7 @@ class Tensor :
         return Tensor(np.zeros_like(tensor.data), requires_grad)
 
     @staticmethod
-    def ones_like(tensor : 'Tensor', requires_grad = False) -> 'Tensor':
+    def ones_like(tensor: 'Tensor', requires_grad: bool = False) -> 'Tensor':
         """
         Creates an instance of a Tensor class of the same shape as the
         given Tensor instance filled with ones.
@@ -111,7 +111,7 @@ class Tensor :
         return Tensor(np.ones_like(tensor.data), requires_grad)
     
     @staticmethod
-    def random_uniform(lo : float, hi : float, size = Tuple[int, ...], requires_grad = False) -> 'Tensor' :
+    def random_uniform(lo: float, hi: float, size: Tuple[int, ...], requires_grad: bool = False) -> 'Tensor' :
         """
         Create's a Tensor by filled with samples drawn from a uniform distribution.
         """        
@@ -125,5 +125,12 @@ class Parameter(Tensor):
     """
     A Tensor subclass that will always track gradients. 
     """    
-    def __init__(self, data: np.ndarray, requires_grad: bool = True, op: Function | None = None):
-        super().__init__(data, requires_grad, op)
+    def __init__(self, tensor : Tensor):
+        super().__init__(tensor.data, requires_grad=True, op=None)
+    
+    def __repr__(self):
+        """
+        Handles calls to print(Parameter)
+        """
+        dt_str = f"dtype={self.dtype}"        
+        return f"Parameter({self.data}, {dt_str})"

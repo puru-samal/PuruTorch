@@ -18,7 +18,7 @@ class ContextManager:
         Save Tensor's during forward pass.
         """        
         for arg in args:
-            if not type(arg).__name__ == "Tensor":
+            if not (type(arg).__name__ == "Tensor" or type(arg).__name__ == "Parameter"):
                 raise ValueError(f"Only Tensors can be saved. Recieved {arg} of type: {type(arg)} instead.")
             self.saved_tensors.append(arg)
 

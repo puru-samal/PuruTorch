@@ -4,11 +4,12 @@ sys.path.append("./")
 from    pathlib import Path
 from    helpers import *
 from    test_tensor import *
+from    test_linear import *
 
 import  PuruTorch
 
 test_list = {
-    'Tensor': [
+    'ops': [
         {
             'name':    'Tensor Add Forward',
             'autolab': 'Tensor Add Forward',
@@ -202,6 +203,20 @@ test_list = {
             'value': 1,
         },
     ],
+    'nn': [
+        {
+            'name':    'Linear Forward',
+            'autolab': 'Linear Forward',
+            'handler': test_linear_forward,
+            'value': 1,
+        },
+        {
+            'name':    'Linear Backward',
+            'autolab': 'Linear Backward',
+            'handler': test_linear_backward,
+            'value': 1,
+        },
+    ]
 }
 
 
