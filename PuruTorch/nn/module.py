@@ -14,12 +14,16 @@ class Module:
         Returns all model parameters in a list. Iterates over each item in self.__dict__,
         and returns every Parameter object.
         '''
+        print(f"{self.__class__.__name__}: Parameter called")
         params = []
         for _, param in self.__dict__.items():
             if isinstance(param, Module):
                 params += param.parameters()
             elif isinstance(param, Parameter):
                 params.append(param)
+            if isinstance(param, List):
+                for p in param:
+                    params += p.parameters()
         return params
 
     def train(self) -> None:
@@ -35,4 +39,3 @@ class Module:
         for _, param in self.__dict__.items():
             if isinstance(param, Module):
                 param.eval()
-

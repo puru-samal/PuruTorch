@@ -28,8 +28,8 @@ class Tensor :
         self.grad_fn = op
         self.shape = self.data.shape
         self.ndim = self.data.ndim
-        self.grad = Tensor.tensor(np.zeros_like(data)) if self.requires_grad else None
-        self.dtype = data.dtype
+        self.grad = None
+        self.dtype = self.data.dtype
         self.is_leaf = self.grad_fn == None
     
     def __repr__(self):
@@ -53,6 +53,10 @@ class Tensor :
         """        
         if not self.requires_grad:
             raise RuntimeError(f"Tried to call backward on a Tensor with requires_grad=False!")
+        
+        # Init grad
+        if self.requires_grad and self.grad is None:
+            self.grad = Tensor.tensor(np.zeros_like(self.data))
 
         if grad is None:
             grad = Tensor.ones_like(self)
@@ -61,12 +65,10 @@ class Tensor :
 
         if not self.is_leaf:
             inp_grads = self.grad_fn.backward(grad_output=self.grad)
-
             for (inp_tensor, inp_grad) in zip(self.grad_fn.ctx.saved_tensors, inp_grads):
                 if isinstance(inp_tensor, Tensor) and inp_tensor.requires_grad:
                     inp_tensor.backward(inp_grad)
-            
-            self.grad = None
+            self.grad = None # Only leaf tensors retain gradients
         return
 
     # ------------------------------------------

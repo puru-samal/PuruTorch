@@ -9,7 +9,6 @@ from helpers import *
 def test_linear():
     for i in range(6, 9):
         print(f"** test{i-5}:", end=' ')
-        
         #np
         npx = np.random.uniform(0.0, 1.0, size=(i,))
 

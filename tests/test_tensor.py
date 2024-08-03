@@ -492,7 +492,7 @@ def test_tensor_sq_usq_backward_(test_name):
 
     return True
 
-def test_tensor_max_sum_backward_(test_name):
+def test_tensor_max_sum_mean_backward_(test_name):
     for i in range(1, 4):
         j = np.random.randint(2, 6)
 
@@ -520,9 +520,12 @@ def test_tensor_max_sum_backward_(test_name):
         if test_name == "max":
             usr_result.max().backward()
             pyt_result.max().backward()
-        if test_name == "sum":
+        elif test_name == "sum":
             usr_result.sum().backward()
             pyt_result.sum().backward()
+        elif test_name == "mean":
+            usr_result.mean().backward()
+            pyt_result.mean().backward()
 
         cmp1 = (cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'type',      name+': x_grad')
             and cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'shape',     name+': x_grad')
@@ -636,12 +639,17 @@ def test_tensor_sum_forward():
     return test_tensor_1op_forward("sum", lambda a: a.sum(0, True))
 
 def test_tensor_sum_backward():
-    return test_tensor_max_sum_backward_("sum")
+    return test_tensor_max_sum_mean_backward_("sum")
 
 def test_tensor_max_forward():
     return test_tensor_1op_forward("max", lambda a: a.max(0, True))
 
 def test_tensor_max_backward():
-    return test_tensor_max_sum_backward_("max")
+    return test_tensor_max_sum_mean_backward_("max")
 
+def test_tensor_mean_forward():
+    return test_tensor_1op_forward("mean", lambda a: a.mean(0, True))
+
+def test_tensor_mean_backward():
+    return test_tensor_max_sum_mean_backward_("mean")
 

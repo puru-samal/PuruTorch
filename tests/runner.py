@@ -6,6 +6,8 @@ from    helpers import *
 from    test_tensor import *
 from    test_linear import *
 from    test_activations import *
+from    test_mlp import *
+from    test_loss import *
 
 import  PuruTorch
 
@@ -203,6 +205,18 @@ test_list = {
             'handler': test_tensor_max_backward,
             'value': 1,
         },
+        {
+            'name':    'Tensor Mean Forward',
+            'autolab': 'Tensor Mean Forward',
+            'handler': test_tensor_mean_forward,
+            'value': 1,
+        },
+        {
+            'name':    'Tensor Mean Backward',
+            'autolab': 'Tensor Mean Backward',
+            'handler': test_tensor_mean_backward,
+            'value': 1,
+        },
     ],
     'nn': [
         {
@@ -215,6 +229,24 @@ test_list = {
             'name':    'Activations Forward/Backward',
             'autolab': 'Activations Forward/Backward',
             'handler': test_activations,
+            'value': 1,
+        },
+        {
+            'name':    'MLP Forward/Backward',
+            'autolab': 'MLP Forward/Backward',
+            'handler': test_mlp,
+            'value': 1,
+        },
+        {
+            'name':    'MSELoss Forward/Backward',
+            'autolab': 'MSELoss Forward/Backward',
+            'handler': test_loss_mse,
+            'value': 1,
+        },
+        {
+            'name':    'CELoss Forward/Backward',
+            'autolab': 'CELoss Forward/Backward',
+            'handler': test_loss_ce,
             'value': 1,
         },
     ]

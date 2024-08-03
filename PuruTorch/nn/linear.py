@@ -1,14 +1,14 @@
-from typing import Any
+from typing import Any, Optional
 import numpy as np
 from .module import Module
 from ..tensor import Tensor, Parameter
+from .activation import Identity
 from ..functional import *
 
 class Linear(Module):
     
     def __init__(self, in_features, out_features) -> None:
         super().__init__()
-        
         self.in_features = in_features
         self.out_features = out_features
         
@@ -28,7 +28,6 @@ class Linear(Module):
         self.b = Parameter(b)
 
     def forward(self, x : Tensor) -> Tensor :
-
         is_batched = x.ndim == 2
         if not is_batched:
             x = x.unsqueeze(0)

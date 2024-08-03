@@ -1,6 +1,6 @@
 
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Literal
 
 class ContextManager:
     """
@@ -33,23 +33,23 @@ class Function:
     """
     Superclass for all tensor operation types.
     """    
-    def __init__(self, debug=False) -> None:
+    def __init__(self, debug=False, debug_mode:Literal['fwd', 'bwd', 'both'] = 'bwd') -> None:
         self.ctx = ContextManager()
         self.debug = debug
+        self.debug_mode = debug_mode
     
     def __call__(self, *args):
         return self.forward(*args)
         
     def forward(self, *args):
         # Call super().foward() to enable debugging
-        if self.debug:
-            print("")
+        if self.debug and (self.debug_mode=='fwd' or self.debug_mode=='both'):
             print(self.__class__.__name__+"_forward")
         return
     
     def backward(self, *args):
         # Call super().backward to enable debugging
-        if self.debug:
+        if self.debug and (self.debug_mode=='bwd' or self.debug_mode=='both'):
             print("")
             print(self.__class__.__name__+"_backward")
         return

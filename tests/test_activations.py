@@ -80,3 +80,4 @@ def test_linear_w_act(act_str):
 def test_activations():
     return test_linear_w_act("Identity") and test_linear_w_act("Sigmoid") \
     and test_linear_w_act("ReLU") and test_linear_w_act("Tanh") and test_linear_w_act("Softmax")
+
