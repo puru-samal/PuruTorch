@@ -8,6 +8,7 @@ from    test_linear import *
 from    test_activations import *
 from    test_mlp import *
 from    test_loss import *
+from    test_optim import *
 
 import  PuruTorch
 
@@ -226,9 +227,33 @@ test_list = {
             'value': 1,
         },
         {
-            'name':    'Activations Forward/Backward',
-            'autolab': 'Activations Forward/Backward',
-            'handler': test_activations,
+            'name':    'Identity Activation Forward/Backward',
+            'autolab': 'Identity Activation Forward/Backward',
+            'handler': test_identity,
+            'value': 1,
+        },
+        {
+            'name':    'Sigmoid Activation Forward/Backward',
+            'autolab': 'Sigmoid Activation Forward/Backward',
+            'handler': test_sigmoid,
+            'value': 1,
+        },
+        {
+            'name':    'ReLU Activation Forward/Backward',
+            'autolab': 'ReLU Activation Forward/Backward',
+            'handler': test_relu,
+            'value': 1,
+        },
+        {
+            'name':    'Tanh Activation Forward/Backward',
+            'autolab': 'Tanh Activation Forward/Backward',
+            'handler': test_tanh,
+            'value': 1,
+        },
+        {
+            'name':    'Softmax Activation Forward/Backward',
+            'autolab': 'Softmax Activation Forward/Backward',
+            'handler': test_softmax,
             'value': 1,
         },
         {
@@ -247,6 +272,26 @@ test_list = {
             'name':    'CELoss Forward/Backward',
             'autolab': 'CELoss Forward/Backward',
             'handler': test_loss_ce,
+            'value': 1,
+        },
+    ],
+    'optim': [
+        {
+            'name':    'SGD',
+            'autolab': 'SGD',
+            'handler': test_optim_sgd,
+            'value': 1,
+        },
+        {
+            'name':    'Adam',
+            'autolab': 'Adam',
+            'handler': test_optim_adam,
+            'value': 1,
+        },
+        {
+            'name':    'AdamW',
+            'autolab': 'AdamW',
+            'handler': test_optim_adamW,
             'value': 1,
         },
     ]

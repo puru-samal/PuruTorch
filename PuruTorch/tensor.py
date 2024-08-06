@@ -1,6 +1,8 @@
 import numpy as np
 from typing import Tuple, Optional
 from .utils import Function
+from collections import deque
+from dataclasses import dataclass
 
 # ------------------------------------------
 # Tensor Class
@@ -31,7 +33,7 @@ class Tensor :
         self.grad = None
         self.dtype = self.data.dtype
         self.is_leaf = self.grad_fn == None
-    
+
     def __repr__(self):
         """
         Handles calls to print(Tensor)
@@ -70,6 +72,41 @@ class Tensor :
                     inp_tensor.backward(inp_grad)
             self.grad = None # Only leaf tensors retain gradients
         return
+    
+    def print_op_tree(self, depth=0,):
+        print( "".join('*' for _ in range(depth)))
+        print("____________________")
+        print(f"| out_shape: {self.shape}")
+        print(f"| out: {self}")
+        print(f"| op: {self.grad_fn}")
+       
+        if not self.grad_fn is None:
+            for (i, inp) in enumerate(self.grad_fn.ctx.saved_tensors):
+                print(f"| inp{i+1}_shape: {inp.shape}")
+                print(f"| inp{i+1}: {inp}")
+        
+        print("____________________")
+           
+
+    @staticmethod
+    def bfs(root : 'Tensor'):
+        
+        @dataclass
+        class AutogradNode:
+            tensor: 'Tensor'
+            depth : int
+
+        queue = deque([AutogradNode(tensor=root, depth=0)])
+        visited = set()
+
+        while queue:
+            parent = queue.popleft()
+            parent.tensor.print_op_tree(parent.depth)
+            visited.add(parent.tensor)
+            if parent.tensor.grad_fn is not None:
+                for child in parent.tensor.grad_fn.ctx.saved_tensors:
+                    if child not in visited:
+                        queue.append(AutogradNode(tensor=child, depth=parent.depth+1))
 
     # ------------------------------------------
     # Tensor Initializers

@@ -167,6 +167,12 @@ class Div(Function):
         a, b = self.ctx.saved_tensors
         a_grad = unbroadcast(grad_output.data * (1 / b.data), a.shape)
         b_grad = unbroadcast(grad_output.data * (-a.data /(b.data**2.0)), b.shape)
+        '''
+        print("Div: ")
+        print(f"a_grad: {a_grad}")
+        print(f"b_grad: {b_grad}")
+        print(f"b.requires_grad: {b.requires_grad}")
+        '''
         return [Tensor.tensor(a_grad), Tensor.tensor(b_grad)]
 
 
@@ -671,12 +677,8 @@ class SoftmaxCrossEntropy(Function):
 
     def forward(self, predictions: Tensor, targets: Tensor, reduction: Union[None, Literal['mean', 'sum']]="mean") -> Tensor:
         super().forward()
-        *N_dim, C = predictions.shape
         self.ctx.save_for_backward(predictions)
-        requires_grad = predictions.requires_grad
         self.ctx.reduction = reduction
-        self.ctx.N = np.prod(N_dim)
-
         self.ctx.targets = targets.data 
         self.ctx.softmax = np.exp(predictions.data) / np.sum(np.exp(predictions.data), axis=-1, keepdims=True)
         data = np.sum(-targets.data * np.log(self.ctx.softmax), axis=-1)
@@ -684,9 +686,11 @@ class SoftmaxCrossEntropy(Function):
             data = data
         elif reduction == "mean":
             data = np.mean(data)
+            *N_dim, _ = predictions.shape
+            self.ctx.N = np.prod(N_dim)
         elif reduction == "sum":
             data = np.sum(data)
-        return Tensor(data, requires_grad, self if requires_grad else None)
+        return Tensor(data, predictions.requires_grad, self if predictions.requires_grad else None)
     
     def backward(self, grad_output: Tensor) -> Tensor:
         super().backward()

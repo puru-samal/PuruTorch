@@ -20,8 +20,6 @@ class Linear(Module):
                                                 np.sqrt(1 / in_features),
                                                 size=(out_features,)))
         
-        self.momentum_W = Tensor.zeros_like(self.W)
-        self.momentum_b = Tensor.zeros_like(self.b)
 
     def init_weights(self, W: Tensor, b: Tensor):
         self.W = Parameter(W)

@@ -41,19 +41,6 @@ class CrossEntropyLoss(Loss):
         self.reduction = reduction
 
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
-        '''
-        # TODO: Doesn't pass gradient check. Debug.
-        N, _  = predictions.shape
-        softmax = F.Softmax()(predictions)
-        CE = F.Sum()((-targets * F.Log()(softmax)), axis=-1) 
-        if self.reduction is None:
-            RCE = CE
-        elif self.reduction == 'sum':
-            RCE = CE.sum()
-        elif self.reduction == 'mean':
-            RCE = CE.sum() /  N
-        return RCE 
-        '''
         RCE = F.SoftmaxCrossEntropy()(predictions, targets, self.reduction)
         return RCE
 
