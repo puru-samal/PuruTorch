@@ -59,7 +59,7 @@ def test_batchnorm1d():
         pyt_loss   = pyt_criterion(pyt_result, pyt_t)
         pyt_loss.backward()
 
-        name = "batchnorm_forward"
+        name = "batchnorm_forward_train"
         cmp1 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name+": y")
             and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name+": y")
             and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name+": y"))
@@ -77,7 +77,38 @@ def test_batchnorm1d():
             and cmp_usr_pyt_tensor(usr_layer.b.grad, pyt_layer.bias.grad, 'shape',     name+": db")
             and cmp_usr_pyt_tensor(usr_layer.b.grad, pyt_layer.bias.grad, 'closeness', name+": db"))
 
-        if not (cmp1 and cmp2 and cmp3 and cmp4):
+        cmp5 = (cmp_usr_pyt_tensor(usr_bn.gamma.grad, pyt_bn.weight.grad, 'type',      name+": gamma grad")
+            and cmp_usr_pyt_tensor(usr_bn.gamma.grad, pyt_bn.weight.grad, 'shape',     name+": gamma grad")
+            and cmp_usr_pyt_tensor(usr_bn.gamma.grad, pyt_bn.weight.grad, 'closeness', name+": gamma grad"))
+        
+        cmp6 = (cmp_usr_pyt_tensor(usr_bn.beta.grad, pyt_bn.bias.grad, 'type',      name+": beta grad")
+            and cmp_usr_pyt_tensor(usr_bn.beta.grad, pyt_bn.bias.grad, 'shape',     name+": beta grad")
+            and cmp_usr_pyt_tensor(usr_bn.beta.grad, pyt_bn.bias.grad, 'closeness', name+": beta grad"))
+        
+        # testing eval_mode
+        usr_layer.eval()
+        usr_act.eval()
+        usr_bn.eval()
+
+        pyt_layer.eval()
+        pyt_act.eval()
+        pyt_bn.eval()
+
+        #forward
+        usr_result = usr_layer(usr_x)
+        usr_result = usr_act(usr_result)
+        usr_result = usr_bn(usr_result)
+
+        pyt_result = pyt_layer(pyt_x)
+        pyt_result = pyt_act(pyt_result)
+        pyt_result = pyt_bn(pyt_result)
+
+        name = "batchnorm_forward_eval"
+        cmp7 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name+": y_eval")
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name+": y_eval")
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name+": y_eval"))
+
+        if not (cmp1 and cmp2 and cmp3 and cmp4 and cmp5 and cmp6 and cmp7):
             print("failed!")
             return False
         else:

@@ -4,7 +4,11 @@ from ..tensor import Tensor, Parameter
 from ..functional import *
 
 class BatchNorm1d(Module):
-    def __init__(self, num_features, eps=1e-5, momentum=0.1):
+    """
+    Applies batch normalization over 2D and 3D inputs. 
+    Tested against Pytorch's Batchnorm1D implementation.
+    """
+    def __init__(self, num_features:int, eps:float=1e-5, momentum:float=0.1):
         super().__init__()
         self.num_features = num_features
 
@@ -23,17 +27,16 @@ class BatchNorm1d(Module):
         return self.forward(x)
 
     def forward(self, x: Tensor) -> Tensor:
-
         N = x.shape[0] # batch size
         mean = x.mean(axis=0)
-        var = x.var(axis=0, keepdims=False, corr=0)
+        var = x.var(axis=0, keepdims=False, corr=0)          # Used for output
+        unbiased_var = x.var(axis=0, keepdims=False, corr=1) # Used for moving avg
         if self.mode == 'train':
-            self.running_mean = self.momentum * self.running_mean + (1. - self.momentum) * mean
-            self.running_var  = self.momentum * self.running_var + (1. - self.momentum) * var
+            self.running_mean = (1. - self.momentum) * self.running_mean + self.momentum * mean
+            self.running_var  = (1. - self.momentum) * self.running_var  + self.momentum * unbiased_var
             Nx = (x - mean) / (var + self.eps) ** 0.5
         else:
             Nx = (x - self.running_mean) / (self.running_var + self.eps) ** 0.5
-        
         
         y = Nx * self.gamma + self.beta
         return y
