@@ -1,8 +1,6 @@
-from typing import Any, Optional
 import numpy as np
 from .module import Module
 from ..tensor import Tensor, Parameter
-from .activation import Identity
 from ..functional import *
 
 class Linear(Module):

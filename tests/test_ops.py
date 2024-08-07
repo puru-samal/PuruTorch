@@ -526,6 +526,115 @@ def test_tensor_max_sum_mean_backward_(test_name):
         elif test_name == "mean":
             usr_result.mean().backward()
             pyt_result.mean().backward()
+        elif test_name == "var":
+            usr_result.var().backward()
+            pyt_result.var().backward()
+
+
+        cmp1 = (cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'type',      name+': x_grad')
+            and cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'shape',     name+': x_grad')
+            and cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'closeness', name+': x_grad'))
+        
+        
+        cmp2 = (cmp_usr_pyt_tensor(usr_a.grad, pyt_a.grad, 'type',      name+': a_grad')
+            and cmp_usr_pyt_tensor(usr_a.grad, pyt_a.grad, 'shape',     name+': a_grad')
+            and cmp_usr_pyt_tensor(usr_a.grad, pyt_a.grad, 'closeness', name+': a_grad'))
+        
+        
+        cmp3 = (cmp_usr_pyt_tensor(usr_b.grad, pyt_b.grad, 'type',      name+': b_grad')
+            and cmp_usr_pyt_tensor(usr_b.grad, pyt_b.grad, 'shape',     name+': b_grad')
+            and cmp_usr_pyt_tensor(usr_b.grad, pyt_b.grad, 'closeness', name+': b_grad'))
+        
+        if not (cmp1 and cmp2 and cmp3):
+            print("failed!")
+            return False
+        else:
+            print("passed!")
+
+    return True
+
+def test_tensor_var_forward_(test_name):
+    for i in range(2, 5):
+        j = np.random.randint(3, 6)
+
+        print(f"** test{i-1}:", end=' ')
+        #np
+        npx = np.random.uniform(0.1, 1.0, size=(i,j))
+        npa = np.random.uniform(0.1, 1.0, size=(i,1))
+        if test_name == "transpose":
+            npb = np.random.uniform(0.1, 1.0, size=(i,))
+        else:
+            npb = np.random.uniform(0.1, 1.0, size=(j,))
+
+        #user
+        usr_x = PuruTorch.Tensor.tensor(npx)
+        usr_a = PuruTorch.Tensor.tensor(npa)
+        usr_b = PuruTorch.Tensor.tensor(npb)
+
+        #pytorch
+        pyt_x = torch.from_numpy(npx)
+        pyt_a = torch.from_numpy(npa)
+        pyt_b = torch.from_numpy(npb)
+
+        # add
+        name = test_name
+        usr_result = usr_x.var(0, keepdims=True)
+        pyt_result = pyt_x.var(0, keepdim=True)
+        cmp1 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+        
+        # broadcasting
+        name = test_name+"_broadcasting1"
+        usr_result = usr_a.var(0, keepdims=True)
+        pyt_result = pyt_a.var(0, keepdim=True)
+        cmp2 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+        
+        name = test_name+"broadcasting2"
+        usr_result = usr_b.var(0, True)
+        pyt_result = pyt_b.var(0, keepdim=True)
+        cmp3 = (cmp_usr_pyt_tensor(usr_result, pyt_result, 'type',      name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'shape',     name)
+            and cmp_usr_pyt_tensor(usr_result, pyt_result, 'closeness', name))
+
+        if not (cmp1 and cmp2 and cmp3):
+            print("failed!")
+            return False
+        else:
+            print("passed!")
+    
+    return True
+
+def test_tensor_var_backward_(test_name):
+    for i in range(1, 4):
+        j = np.random.randint(2, 6)
+
+        print(f"** test{i}:", end=' ')
+        #np
+        npx = np.random.uniform(0.1, 1.0, size=(i,j))
+        npa = np.random.uniform(0.1, 1.0, size=(i,1))
+        npb = np.random.uniform(0.1, 1.0, size=(j,))
+            
+        #user
+        usr_x = PuruTorch.Tensor.tensor(npx, requires_grad=True)
+        usr_a = PuruTorch.Tensor.tensor(npa, requires_grad=True)
+        usr_b = PuruTorch.Tensor.tensor(npb, requires_grad=True)
+        
+        #pytorch
+        pyt_x = torch.from_numpy(npx).requires_grad_()
+        pyt_a = torch.from_numpy(npa).requires_grad_()
+        pyt_b = torch.from_numpy(npb).requires_grad_()
+        
+        # complex op
+        name = test_name
+        usr_result = usr_b + usr_a + usr_x
+        pyt_result = pyt_b + pyt_a + pyt_x
+        
+        usr_result.var().backward()
+        pyt_result.var().backward()
+
 
         cmp1 = (cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'type',      name+': x_grad')
             and cmp_usr_pyt_tensor(usr_x.grad, pyt_x.grad, 'shape',     name+': x_grad')
@@ -652,4 +761,10 @@ def test_tensor_mean_forward():
 
 def test_tensor_mean_backward():
     return test_tensor_max_sum_mean_backward_("mean")
+
+def test_tensor_var_forward():
+    return test_tensor_var_forward_("var")
+
+def test_tensor_var_backward():
+    return test_tensor_var_backward_("var")
 

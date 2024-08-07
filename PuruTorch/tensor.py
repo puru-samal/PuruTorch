@@ -65,13 +65,15 @@ class Tensor :
 
         self.grad += grad
 
-        if not self.is_leaf:
-            inp_grads = self.grad_fn.backward(grad_output=self.grad)
-            for (inp_tensor, inp_grad) in zip(self.grad_fn.ctx.saved_tensors, inp_grads):
-                if isinstance(inp_tensor, Tensor) and inp_tensor.requires_grad:
-                    inp_tensor.backward(inp_grad)
-            self.grad = None # Only leaf tensors retain gradients
-        return
+        if self.is_leaf:
+            return
+
+        inp_grads = self.grad_fn.backward(grad_output=self.grad)
+        for (inp_tensor, inp_grad) in zip(self.grad_fn.ctx.saved_tensors, inp_grads):
+            if isinstance(inp_tensor, Tensor) and inp_tensor.requires_grad:
+                inp_tensor.backward(inp_grad)
+        self.grad = None # Only leaf tensors retain gradients
+        
     
     def print_op_tree(self, depth=0,):
         print( "".join('*' for _ in range(depth)))

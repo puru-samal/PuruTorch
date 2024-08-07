@@ -27,7 +27,7 @@ class Sigmoid(Module):
 class Tanh(Module):
     """
     Tanh Activation Function
-    """  
+    """ 
     def __call__(self, x: Tensor) -> Tensor:
         return self.forward(x)
     

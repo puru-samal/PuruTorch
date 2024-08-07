@@ -459,7 +459,7 @@ class Sum(Function):
 
 class Mean(Function):
     """
-    Tensor Sum operation.
+    Tensor Mean operation.
     """
     def __call__(self, a: Tensor, axis: Optional[int] = None, keepdims: bool = False) -> Tensor:
         return self.forward(a, axis, keepdims)
@@ -492,7 +492,45 @@ class Mean(Function):
         denom = np.prod(a.shape) if self.ctx.axis is None else np.prod(a.shape[self.ctx.axis])
         a_grad = a_grad * np.ones_like(a.data) / denom
         return [Tensor.tensor(a_grad)]
+    
 
+class Var(Function):
+    """
+    Tensor Mean operation.
+    """
+    def __call__(self, a: Tensor, axis: Optional[int] = None, keepdims: bool = False, corr=1) -> Tensor:
+        return self.forward(a, axis, keepdims, corr)
+        
+    def forward(self, a: Tensor, axis: Optional[int] = None, keepdims: bool = False, corr=1) -> Tensor:
+        super().forward()
+        if not isinstance(a, Tensor):
+            a = Tensor.tensor(np.array(a))
+
+        self.ctx.save_for_backward(a)
+        self.ctx.axis = axis
+        self.ctx.keepdims = keepdims
+        self.ctx.corr = corr
+
+        requires_grad = a.requires_grad
+        data = np.var(a.data, axis=axis, keepdims=keepdims, ddof=corr)
+        out = Tensor(data, requires_grad, self if requires_grad else None)
+        return out
+    
+    def backward(self, grad_output: Tensor) -> Tensor:
+        super().backward()
+        a = self.ctx.saved_tensors[0]
+
+        # if axis reduction happened
+        if not self.ctx.keepdims and self.ctx.axis is not None:
+            # expand reduced axis 
+            a_grad = np.expand_dims(grad_output.data, self.ctx.axis) * np.ones_like(a.data)
+        else: # Scalar
+            a_grad = grad_output.data * np.ones_like(a.data)
+        
+        a_grad *=  2. * (a.data - np.mean(a.data, axis=self.ctx.axis, keepdims=True))
+        denom = np.prod(a.shape) if self.ctx.axis is None else np.prod(a.shape[self.ctx.axis])
+        a_grad /= (denom - self.ctx.corr) 
+        return [Tensor.tensor(a_grad)]
 
 # ------------------------------------------
 # Tensor Bindings
@@ -521,6 +559,7 @@ Tensor.exp  = lambda self : Exp()(self)
 Tensor.max  = lambda self, axis=None, keepdims=False : Max() (self, axis, keepdims)
 Tensor.sum  = lambda self, axis=None, keepdims=False : Sum() (self, axis, keepdims)
 Tensor.mean = lambda self, axis=None, keepdims=False : Mean()(self, axis, keepdims)
+Tensor.var  = lambda self, axis=None, keepdims=False, corr=1 : Var() (self, axis, keepdims, corr)
 
 # ------------------------------------------
 #  Activation Functional

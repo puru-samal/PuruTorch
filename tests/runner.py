@@ -3,12 +3,13 @@ import  sys
 sys.path.append("./")
 from    pathlib import Path
 from    helpers import *
-from    test_tensor import *
+from    test_ops import *
 from    test_linear import *
 from    test_activations import *
 from    test_mlp import *
 from    test_loss import *
 from    test_optim import *
+from    test_batchnorm import *
 
 import  PuruTorch
 
@@ -218,6 +219,18 @@ test_list = {
             'handler': test_tensor_mean_backward,
             'value': 1,
         },
+        {
+            'name':    'Tensor Var Forward',
+            'autolab': 'Tensor Var Forward',
+            'handler': test_tensor_var_forward,
+            'value': 1,
+        },
+        {
+            'name':    'Tensor Var Backward',
+            'autolab': 'Tensor Var Backward',
+            'handler': test_tensor_var_backward,
+            'value': 1,
+        },
     ],
     'nn': [
         {
@@ -274,23 +287,29 @@ test_list = {
             'handler': test_loss_ce,
             'value': 1,
         },
+        {
+            'name':    'Batchnorm1d Forward/Backward',
+            'autolab': 'Batchnorm1d Forward/Backward',
+            'handler': test_batchnorm1d,
+            'value': 1,
+        },
     ],
     'optim': [
         {
-            'name':    'SGD',
-            'autolab': 'SGD',
+            'name':    'SGD Optimizer Step',
+            'autolab': 'SGD Optimizer Step',
             'handler': test_optim_sgd,
             'value': 1,
         },
         {
-            'name':    'Adam',
-            'autolab': 'Adam',
+            'name':    'Adam Optimizer Step',
+            'autolab': 'Adam Optimizer Step',
             'handler': test_optim_adam,
             'value': 1,
         },
         {
-            'name':    'AdamW',
-            'autolab': 'AdamW',
+            'name':    'AdamW Optimizer Step',
+            'autolab': 'AdamW Optimizer Step',
             'handler': test_optim_adamW,
             'value': 1,
         },

@@ -99,7 +99,6 @@ def test_loss_mse():
 
 def test_loss_ce():
     np.random.seed(11785)
-    i = 0 
     for i in range(len(test_dims)):
         print(f"** test{i+1}:", end=' ')
 

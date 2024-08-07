@@ -31,6 +31,10 @@ class Module:
         for _, param in self.__dict__.items():
             if isinstance(param, Module):
                 param.train()
+            elif isinstance(param, List):
+                for p in param:
+                    if isinstance(p, Module):
+                        p.train()
     
     def eval(self) -> None:
         ''' Sets module's mode to eval, which influences layers like Dropout'''
@@ -38,3 +42,8 @@ class Module:
         for _, param in self.__dict__.items():
             if isinstance(param, Module):
                 param.eval()
+            elif isinstance(param, List):
+                for p in param:
+                    if isinstance(p, Module):
+                        p.eval()
+                    
