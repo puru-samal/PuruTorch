@@ -10,6 +10,8 @@ from    test_mlp import *
 from    test_loss import *
 from    test_optim import *
 from    test_batchnorm import *
+from    test_rnn import *
+from    test_gru import *
 
 import  PuruTorch
 
@@ -291,6 +293,30 @@ test_list = {
             'name':    'Batchnorm1d Forward/Backward',
             'autolab': 'Batchnorm1d Forward/Backward',
             'handler': test_batchnorm1d,
+            'value': 1,
+        },
+        {
+            'name':    'RNNCell Forward/Backward',
+            'autolab': 'RNNCell Forward/Backward',
+            'handler': test_rnncell,
+            'value': 1,
+        },
+        {
+            'name':    'RNNClassifier Forward/Backward',
+            'autolab': 'RNNClassifier Forward/Backward',
+            'handler': test_rnn_classifier,
+            'value': 1,
+        },
+        {
+            'name':    'GRUCell Forward/Backward',
+            'autolab': 'GRUCell Forward/Backward',
+            'handler': test_grucell,
+            'value': 1,
+        },
+        {
+            'name':    'GRUClassifier Forward/Backward',
+            'autolab': 'GRUClassifier Forward/Backward',
+            'handler': test_gru_classifier,
             'value': 1,
         },
     ],

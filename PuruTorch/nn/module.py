@@ -1,12 +1,13 @@
-from ..tensor import Parameter
+from ..tensor import Parameter, Tensor
 from typing import List
 
 class Module:
     ''' General Module superclass'''
     def __init__(self):
+        self.mode = 'train'
         pass
 
-    def __call__(self, x):
+    def __call__(self, x:Tensor) -> Tensor:
         return self.forward(x)
 
     def parameters(self) -> List[Parameter]:
@@ -20,7 +21,7 @@ class Module:
                 params += param.parameters()
             elif isinstance(param, Parameter):
                 params.append(param)
-            if isinstance(param, List):
+            if isinstance(param, List): # List of modules, comparable to nn.Sequential
                 for p in param:
                     params += p.parameters()
         return params

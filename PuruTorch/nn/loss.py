@@ -18,6 +18,9 @@ class Loss():
 
 
 class MSELoss(Loss):
+    '''
+    Computes squared L2 Norm between each element in predictions and targets.  
+    '''
     def __init__(self, reduction: Union[None, Literal['mean', 'sum']]=None):
         super().__init__()
         self.reduction = reduction

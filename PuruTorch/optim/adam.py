@@ -4,7 +4,10 @@ from typing import Tuple
 import numpy as np
 
 class Adam(Optimizer):
-
+    """
+    An implementation of the Adam algorithm.
+    Tested against PyTorch's implementation for correctness.
+    """  
     def __init__(self, params, lr=0.001, betas:Tuple[float, float]=(0.9, 0.99), eps=1e-8):
         super().__init__(params)
         self.lr = lr

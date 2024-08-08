@@ -2,7 +2,10 @@ from .optimizer import Optimizer
 from ..tensor import Tensor
 
 class SGD(Optimizer):
-
+    """
+    An implementation of stochastic gradient descent, optionall with momentum.
+    Tested against PyTorch's implementation for correctness.
+    """    
     def __init__(self, params, lr=0.001, momentum=0.0):
         super().__init__(params)
         self.lr = lr

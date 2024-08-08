@@ -4,7 +4,10 @@ from ..tensor import Tensor, Parameter
 from ..functional import *
 
 class Linear(Module):
-    
+    """
+    Applies affine linear transformation. 
+    y = x @ W.T + b.T
+    """
     def __init__(self, in_features, out_features) -> None:
         super().__init__()
         self.in_features = in_features

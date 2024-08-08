@@ -4,7 +4,10 @@ from typing import Tuple
 import numpy as np
 
 class AdamW(Optimizer):
-
+    """
+    An implementation of the AdamW algorithm.
+    Tested against PyTorch's implementation for correctness.
+    """  
     def __init__(self, params, lr=0.001, betas:Tuple[float, float]=(0.9, 0.99), eps=1e-8, weight_decay=0.01):
         super().__init__(params)
         self.lr = lr
@@ -18,7 +21,6 @@ class AdamW(Optimizer):
     def step(self):
         self.t += 1
         for i, param in enumerate(self.params):
-    
             # weight decay update
             param.data = param.data - param.data * self.weight_decay * self.lr
 
