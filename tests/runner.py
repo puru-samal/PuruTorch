@@ -12,8 +12,9 @@ from    test_optim import *
 from    test_batchnorm import *
 from    test_rnn import *
 from    test_gru import *
+from    test_ctc_decoding import *
 
-import  PuruTorch
+search_test = SearchTest()
 
 test_list = {
     'ops': [
@@ -236,12 +237,6 @@ test_list = {
     ],
     'nn': [
         {
-            'name':    'Linear Forward/Backward',
-            'autolab': 'Linear Forward/Backward',
-            'handler': test_linear,
-            'value': 1,
-        },
-        {
             'name':    'Identity Activation Forward/Backward',
             'autolab': 'Identity Activation Forward/Backward',
             'handler': test_identity,
@@ -290,9 +285,21 @@ test_list = {
             'value': 1,
         },
         {
+            'name':    'CTCLoss Forward/Backward',
+            'autolab': 'CTCLoss Forward/Backward',
+            'handler': test_loss_ctc,
+            'value': 1,
+        },
+        {
             'name':    'Batchnorm1d Forward/Backward',
             'autolab': 'Batchnorm1d Forward/Backward',
             'handler': test_batchnorm1d,
+            'value': 1,
+        },
+        {
+            'name':    'Linear Forward/Backward',
+            'autolab': 'Linear Forward/Backward',
+            'handler': test_linear,
             'value': 1,
         },
         {
@@ -339,6 +346,20 @@ test_list = {
             'handler': test_optim_adamW,
             'value': 1,
         },
+    ],
+    'search': [
+        {
+            'name':    'Decoding: Greedy Search',
+            'autolab': 'Decoding: Greedy Search',
+            'handler': search_test.test_greedy_search,
+            'value': 1
+        },
+        {
+            'name':    'Decoding: Beam Search',
+            'autolab': 'Decoding: Beam Search',
+            'handler': search_test.test_beam_search,
+            'value': 1
+        }
     ]
 }
 

@@ -1,7 +1,7 @@
 from ..tensor import Tensor
 from .. import functional as F
 from typing import Union, Literal
-import numpy as np
+from ._CTC import _CTCLoss
 
 class Loss():
     """
@@ -39,16 +39,29 @@ class MSELoss(Loss):
         return MSE
 
 class CrossEntropyLoss(Loss):
+    '''Computes the cross entropy loss between input logits and targets'''
     def __init__(self, reduction: Union[None, Literal['mean', 'sum']]='mean'):
         super().__init__()
         self.reduction = reduction
 
+    def __call__(self, predictions: Tensor, targets: Tensor) -> Tensor:
+        return self.forward(predictions, targets)
+    
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
         RCE = F.SoftmaxCrossEntropy()(predictions, targets, self.reduction)
         return RCE
 
 
 class CTCLoss(Loss):
-    def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
-        pass
-        
+    '''An implementation of the Connectionist Temporal Classification loss'''
+    def __init__(self, BLANK:int=0, reduction: Union[None, Literal['mean', 'sum']]='mean'):
+        super().__init__()
+        self.BLANK = BLANK
+        self.reduction = reduction
+    
+    def __call__(self, logits:Tensor, target:Tensor, input_lengths:Tensor, target_lengths:Tensor) -> Tensor:
+        return self.forward(logits, target, input_lengths, target_lengths)
+
+    def forward(self, logits:Tensor, target:Tensor, input_lengths:Tensor, target_lengths:Tensor) -> Tensor:
+        RCTC = _CTCLoss()(logits, target, input_lengths, target_lengths, self.BLANK, self.reduction)
+        return RCTC

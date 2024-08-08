@@ -229,7 +229,6 @@ class Slice(Function):
            a_grad[self.ctx.key] = grad_output.data
         return [Tensor.tensor(a_grad)]
 
-
 class Reshape(Function):
     """
     Tensor Reshape operation.
@@ -715,10 +714,12 @@ class SoftmaxCrossEntropy(Function):
     An explicit SoftmaxCrossEntropy functional to reuse values computed in forward.
     """    
 
-    def __call__(self, predictions: Tensor, targets: Tensor, reduction: Union[None, Literal['mean', 'sum']]="mean") -> Tensor:
+    def __call__(self, predictions: Tensor, targets: Tensor, 
+                 reduction: Union[None, Literal['mean', 'sum']]="mean") -> Tensor:
         return self.forward(predictions, targets, reduction)
 
-    def forward(self, predictions: Tensor, targets: Tensor, reduction: Union[None, Literal['mean', 'sum']]="mean") -> Tensor:
+    def forward(self, predictions: Tensor, targets: Tensor, 
+                reduction: Union[None, Literal['mean', 'sum']]="mean") -> Tensor:
         super().forward()
         self.ctx.save_for_backward(predictions)
         self.ctx.reduction = reduction

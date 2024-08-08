@@ -5,10 +5,11 @@ sys.path.append("./")
 from PuruTorch import Tensor
 from PuruTorch.nn.activation import *
 from PuruTorch.models import MLP
-from PuruTorch.nn.loss import MSELoss, CrossEntropyLoss
+from PuruTorch.nn.loss import MSELoss, CrossEntropyLoss, CTCLoss
 import numpy as np
 from helpers import *
 from torchviz import make_dot
+import os
 
 
 class pyt_MLP(torch.nn.Module):
@@ -162,3 +163,41 @@ def test_loss_ce():
             print("passed!")
     
     return True
+
+def test_loss_ctc():
+
+    print(f"** test{1}:", end=' ')
+
+    data_path = os.getcwd() + '/tests/data'
+    ref_data_path = data_path + '/ctc_ref_data' 
+    probs = np.load(os.path.join(data_path, "X.npy"))
+    targets = np.load(os.path.join(data_path, "Y.npy"))
+    input_lens = np.load(os.path.join(data_path, "X_lens.npy"))
+    out_lens = np.load(os.path.join(data_path, "Y_lens.npy"))
+
+    usr_logits = Tensor.tensor(probs, requires_grad=True)
+    usr_target =  Tensor.tensor(targets)
+    usr_input_lengths  =  Tensor.tensor(input_lens)
+    usr_target_lengths =  Tensor.tensor(out_lens)
+
+    usr_ctc_loss = CTCLoss()
+    usr_loss = usr_ctc_loss(usr_logits, usr_target, usr_input_lengths, usr_target_lengths)
+    ref_loss = torch.from_numpy(np.load(os.path.join(ref_data_path, "ref_loss.npy")))
+    ref_dy = torch.from_numpy(np.load(os.path.join(ref_data_path, "ref_dy.npy")))
+
+    name = "ctc_forward"
+    out_cmp = (cmp_usr_pyt_tensor(usr_loss,  ref_loss, 'type',      name+": loss")
+            and cmp_usr_pyt_tensor(usr_loss, ref_loss, 'shape',     name+": loss")
+            and cmp_usr_pyt_tensor(usr_loss, ref_loss, 'closeness', name+": loss"))
+    
+    usr_loss.backward()
+    grad_cmp = (cmp_usr_pyt_tensor(usr_logits.grad,  ref_dy, 'type',      name+": dy")
+            and cmp_usr_pyt_tensor(usr_logits.grad,  ref_dy, 'shape',     name+": dy")
+            and cmp_usr_pyt_tensor(usr_logits.grad, ref_dy, 'closeness', name+": dy"))
+    
+    if not (out_cmp and grad_cmp):
+            print("failed!")
+            return False
+    else:
+        print("passed!")
+        return True
