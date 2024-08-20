@@ -14,6 +14,9 @@ from    test_rnn import *
 from    test_gru import *
 from    test_ctc_decoding import *
 from    test_resampling import *
+from    test_conv1d import *
+from    test_conv2d import *
+
 
 search_test = SearchTest()
 
@@ -319,6 +322,18 @@ test_list = {
             'name':    'Layer: Linear Forward/Backward',
             'autolab': 'Layer: Linear Forward/Backward',
             'handler': test_linear,
+            'value': 1,
+        },
+        {
+            'name':    'Layer: Conv1D Forward/Backward',
+            'autolab': 'Layer: Conv1D Forward/Backward',
+            'handler': test_conv1d,
+            'value': 1,
+        },
+        {
+            'name':    'Layer: Conv2D Forward/Backward',
+            'autolab': 'Layer: Conv2D Forward/Backward',
+            'handler': test_conv2d,
             'value': 1,
         },
         {

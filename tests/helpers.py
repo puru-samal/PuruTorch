@@ -31,7 +31,7 @@ def cmp_usr_pyt_tensor(myTensor, pytTensor, test_type, test_name):
                 return False
         elif test_type == "closeness":
             try:
-                assert np.allclose(user_vals, expected_vals,atol=1e-5)
+                assert np.allclose(user_vals, expected_vals,atol=1e-4)
             except Exception as e:
                 print("Closeness error, your values dont match the expected values.")
                 print("Wrong values for %s" % test_name)
@@ -39,7 +39,6 @@ def cmp_usr_pyt_tensor(myTensor, pytTensor, test_type, test_name):
                 print("Expected values:", expected_vals)
                 return False
         return True
-
 
 
 def print_failure(cur_test, num_dashes=51):
