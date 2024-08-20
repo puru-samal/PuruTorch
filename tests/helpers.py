@@ -41,6 +41,7 @@ def cmp_usr_pyt_tensor(myTensor, pytTensor, test_type, test_name):
         return True
 
 
+
 def print_failure(cur_test, num_dashes=51):
     print('*' * num_dashes)
     print('The local autograder will not work if you do not pass %s.' % cur_test)

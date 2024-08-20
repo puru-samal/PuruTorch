@@ -441,7 +441,7 @@ class Sum(Function):
         out = Tensor(data, requires_grad, self if requires_grad else None)
         return out
     
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         super().backward()
         a = self.ctx.saved_tensors[0]
 
@@ -477,7 +477,7 @@ class Mean(Function):
         out = Tensor(data, requires_grad, self if requires_grad else None)
         return out
     
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         super().backward()
         a = self.ctx.saved_tensors[0]
 
@@ -515,7 +515,7 @@ class Var(Function):
         out = Tensor(data, requires_grad, self if requires_grad else None)
         return out
     
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         super().backward()
         a = self.ctx.saved_tensors[0]
 
@@ -580,7 +580,7 @@ class Identity(Function):
         data = a.data
         return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         a_grad = grad_output.data
         return [Tensor.tensor(a_grad)]
     
@@ -602,7 +602,7 @@ class Sigmoid(Function):
         self.ctx.fwd_out = data
         return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         a_grad = grad_output.data * (self.ctx.fwd_out - self.ctx.fwd_out**2)
         return [Tensor.tensor(a_grad)]
     
@@ -624,7 +624,7 @@ class Tanh(Function):
         self.ctx.fwd_out = data
         return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         a_grad = grad_output.data * (1 - self.ctx.fwd_out**2)
         return [Tensor.tensor(a_grad)]
 
@@ -646,7 +646,7 @@ class ReLU(Function):
         self.ctx.fwd_out = data
         return Tensor(data, requires_grad, self if requires_grad else None)
     
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         a_grad = grad_output.data * np.where(self.ctx.fwd_out > 0.0, 1.0, 0.0)
         return [Tensor.tensor(a_grad)]
 
@@ -681,7 +681,7 @@ class Softmax(Function):
         return Tensor(data, requires_grad, self if requires_grad else None)
     
 
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         if not self.ctx.is_batched:
             fwd_data = self.ctx.fwd_out.reshape(1, -1)
             g_out    = grad_output.data.reshape(1, -1)
@@ -736,7 +736,7 @@ class SoftmaxCrossEntropy(Function):
             data = np.sum(data)
         return Tensor(data, predictions.requires_grad, self if predictions.requires_grad else None)
     
-    def backward(self, grad_output: Tensor) -> Tensor:
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
         super().backward()
         if self.ctx.reduction is None:
             a_grad = grad_output.data * (self.ctx.softmax - self.ctx.targets)
@@ -771,7 +771,7 @@ class dropout(Function):
         else:
             return x
     
-    def backward(self, grad_output:Tensor) -> Tensor:
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
         if self.ctx.train:
             return [Tensor.tensor(grad_output.data * self.ctx.mask)]
         else:
@@ -801,7 +801,7 @@ class dropout1d(Function):
         else:
             return x
     
-    def backward(self, grad_output:Tensor) -> Tensor:
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
         if self.ctx.train:
             return [Tensor.tensor(grad_output.data * self.ctx.mask / (1. - self.ctx.p))]
         else:
@@ -831,10 +831,189 @@ class dropout2d(Function):
         else:
             return x
     
-    def backward(self, grad_output:Tensor) -> Tensor:
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
         if self.ctx.train:
             return [Tensor.tensor(grad_output.data * self.ctx.mask / (1. - self.ctx.p))]
         else:
             x = self.ctx.saved_tensors[0]
             return [Tensor.ones_like(x)]
-            
+
+
+# ------------------------------------------
+#  Conv Functionals
+# ------------------------------------------
+
+class Pad1D(Function):
+    """
+    Functional to handle forward/backward passes of 
+    padding a A 3D input for 1D convolution.
+    """
+    def __call__(self, A:Tensor, padding:int=0) -> Tensor:
+        return self.forward(A, padding)
+    
+    def forward(self, A:Tensor, padding:int=0) -> Tensor:
+        self.ctx.save_for_backward(A)
+        self.padding = padding # for backward
+        if self.padding > 0:
+            padded_A = np.pad(A.data, pad_width=((0,), (0,), (self.padding,)), mode='constant')
+        else:
+            padded_A = A.data.copy()
+        return Tensor(padded_A, A.requires_grad, self if A.requires_grad else None)
+    
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
+        if self.padding > 0:
+            dLdA = grad_output.data[:, :, self.padding:(grad_output.shape[-1]-self.padding)]
+        else:
+            dLdA = grad_output.data.copy()
+        return [Tensor.tensor(dLdA)]
+        
+
+class Conv1D_stride1(Function):
+    """
+    Functional to handle forward/backward passes of 
+    a 1D stride1 convolution 
+    """
+    def __call__(self, A:Tensor, W:Tensor, b:Tensor) -> Tensor:
+        return self.forward(A, W, b)
+    
+    def forward(self, A:Tensor, W:Tensor, b:Tensor) -> Tensor:
+        # A : N * C_in  * W_in
+        # Z : N * C_out * W_out
+        # W : C_out * C_in * K
+        # b : C_out,
+
+        self.ctx.save_for_backward(A, W, b)
+        N, _, W_in  = A.shape      # batch size x in_chans x in_width
+        C_out, _, K = W.shape      # out_chans x in_chans x kernel
+        W_out       = W_in - K + 1 # out_width
+
+        Z = np.zeros((N, C_out, W_out))
+
+        for w in range(W_out):
+            axs = ([1, 2], [1, 2])
+            Z[:, :, w] += np.tensordot(A.data[:, :, w : w+K], W.data, axes=axs)
+            Z[:, :, w] += b.data
+        
+        requires_grad = A.requires_grad or W.requires_grad or b.requires_grad
+        return Tensor(Z, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
+        # dLdA : N * C_in  * W_in
+        # dLdZ : N * C_out * W_out (grad_output)
+        # dLdW : C_out * C_in * K
+        # dLdb : C_out,
+
+        A, W, _ = self.ctx.saved_tensors
+        _, _, K     = W.shape
+        _, _, W_out = grad_output.shape
+        _, _, W_in  = A.shape
+
+        dLdb = np.sum(grad_output.data, axis=(0, 2))
+
+        dLdW = np.zeros_like(W.data)
+        for k in range(K):
+            axs = ([0, 2], [0, 2])
+            dLdW[:, :,k] += np.tensordot(grad_output.data, A.data[:, :, k:k+W_out], axes=axs)
+
+        dLdA = np.zeros_like(A.data)
+        # Padding only on laxt axis
+        pwidths = ((0,), (0,), (K-1,))
+        pdLdZ = np.pad(grad_output.data, pad_width=pwidths, mode='constant')
+        flipW = np.flip(W.data, axis=2)  # Flip only on last axis
+
+        for w in range(W_in):
+            axs = ([1, 2], [0, 2])
+            dLdA[:, :, w] = np.tensordot(pdLdZ[:, :, w:w+K], flipW, axes=axs)
+
+        return [Tensor.tensor(dLdA), Tensor.tensor(dLdW), Tensor.tensor(dLdb)]
+
+class Pad2D(Function):
+    """
+    Functional to handle forward/backward passes of 
+    padding a A 4D input for 2D convolution.
+    """
+    def __call__(self, A:Tensor, padding:int=0) -> Tensor:
+        return self.forward(A, padding)
+    
+    def forward(self, A:Tensor, padding:int=0) -> Tensor:
+        self.ctx.save_for_backward(A)
+        self.padding = padding # for backward
+        if self.padding > 0:
+            padded_A = np.pad(A.data, pad_width=((0,), (0,), (self.padding,), (self.padding,)), mode='constant')
+        else:
+            padded_A = A.data.copy()
+        return Tensor(padded_A, A.requires_grad, self if A.requires_grad else None)
+    
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
+        if self.padding > 0:
+            dLdA = grad_output.data[:, :, 
+                                    self.padding:(grad_output.shape[-1]-self.padding), 
+                                    self.padding:(grad_output.shape[-1]-self.padding)]
+        else:
+            dLdA = grad_output.data.copy()
+        return [Tensor.tensor(dLdA)]
+
+
+class Conv2D_stride1(Function):
+    """
+    Functional to handle forward/backward passes of 
+    a 2D stride1 convolution 
+    """
+    def __call__(self, A:Tensor, W:Tensor, b:Tensor) -> Tensor:
+        return self.forward(A, W, b)
+    
+    def forward(self, A:Tensor, W:Tensor, b:Tensor) -> Tensor:
+        # A : N * C_in  * H_in * W_in
+        # Z : N * C_out * H_in * W_out
+        # W : C_out * C_in * K * K
+        # b : C_out,
+
+        self.ctx.save_for_backward(A, W, b)
+        N, _, H_in, W_in  = A.shape      # batch size x in_chans x in_width
+        C_out, _, _, K    = W.shape      # out_chans x in_chans x kernel
+        H_out, W_out      = H_in - K + 1, W_in - K + 1 # out_width
+
+        Z = np.zeros((N, C_out, H_out, W_out))
+
+        for h in range(H_out):
+            for w in range(W_out):
+                axs = ([1, 2, 3], [1, 2, 3])
+                Z[:, :, h, w] += np.tensordot(A.data[:, :, h:h+K, w:w+K], W.data, axes=axs)
+                Z[:, :, h, w] += b.data
+        
+        requires_grad = A.requires_grad or W.requires_grad or b.requires_grad
+        return Tensor(Z, requires_grad, self if requires_grad else None)
+    
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
+        # dLdA : N * C_in  * W_in
+        # dLdZ : N * C_out * W_out (grad_output)
+        # dLdW : C_out * C_in * K
+        # dLdb : C_out * 1
+
+        A, W, _ = self.ctx.saved_tensors
+        _, _, _, K         = W.shape
+        _, _, H_out, W_out = grad_output.shape
+        _, _, H_in,  W_in  = A.shape
+
+        dLdb = np.sum(grad_output.data, axis=(0, 2, 3))
+
+        dLdW = np.zeros_like(W.data)
+        for kh in range(K):
+            for kw in range(K):
+                axs = ([0, 2, 3], [0, 2, 3])
+                dLdW[:, :, kh, kw] += np.tensordot(grad_output.data, A.data[:, :, kh:kh+H_out, kw:kw+W_out], axes=axs)
+
+        dLdA = np.zeros_like(A.data)
+        # Padding only on laxt axis
+        pwidths = ((0,), (0,), (K-1,), (K-1,))
+        pdLdZ = np.pad(grad_output.data, pad_width=pwidths, mode='constant')
+        flipW = np.flip(W.data, axis=(2,3))  # Flip only on last two axis
+
+        for h in range(H_in):
+            for w in range(W_in):
+                axs = ([1, 2, 3], [0, 2, 3])
+                dLdA[:, :, h, w] = np.tensordot(pdLdZ[:, :, h:h+K, w:w+K], flipW, axes=axs)
+
+        return [Tensor.tensor(dLdA), Tensor.tensor(dLdW), Tensor.tensor(dLdb)]
+
+

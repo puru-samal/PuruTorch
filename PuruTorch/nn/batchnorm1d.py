@@ -27,7 +27,6 @@ class BatchNorm1d(Module):
         return self.forward(x)
 
     def forward(self, x: Tensor) -> Tensor:
-        N = x.shape[0] # batch size
         mean = x.mean(axis=0)
         var = x.var(axis=0, keepdims=False, corr=0)          # Used for output
         unbiased_var = x.var(axis=0, keepdims=False, corr=1) # Used for moving avg
