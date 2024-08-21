@@ -3,9 +3,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 import sys
 sys.path.append("./")
 from PuruTorch import Tensor
-from PuruTorch.nn import RNNCell
+from PuruTorch.nn import RNNCell, Tanh
 from PuruTorch.models import RNNClassifier
-from PuruTorch.nn.activation import *
 import torch
 from torch import nn
 import numpy as np

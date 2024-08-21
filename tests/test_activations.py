@@ -2,7 +2,7 @@ import sys
 sys.path.append("./")
 from PuruTorch import Tensor
 from PuruTorch.nn import Linear
-from PuruTorch.nn.activation import *
+from PuruTorch.nn import Identity, Sigmoid, ReLU, Tanh, Softmax
 import torch
 import numpy as np
 from helpers import *

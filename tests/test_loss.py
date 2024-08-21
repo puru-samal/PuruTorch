@@ -3,12 +3,10 @@ from typing import List, Optional
 import sys
 sys.path.append("./")
 from PuruTorch import Tensor
-from PuruTorch.nn.activation import *
+from PuruTorch.nn import ReLU, Softmax, MSELoss, CrossEntropyLoss, CTCLoss
 from PuruTorch.models import MLP
-from PuruTorch.nn.loss import MSELoss, CrossEntropyLoss, CTCLoss
 import numpy as np
 from helpers import *
-from torchviz import make_dot
 import os
 
 

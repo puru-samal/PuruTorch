@@ -2,11 +2,10 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 import sys
 sys.path.append("./")
-from PuruTorch import Tensor
 from torch import nn
+from PuruTorch import Tensor
 from PuruTorch.nn import GRUCell
 from PuruTorch.models import GRUClassifier
-from PuruTorch.nn.activation import *
 import torch
 import numpy as np
 from helpers import *

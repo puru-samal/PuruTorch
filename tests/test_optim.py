@@ -3,13 +3,11 @@ from typing import List, Optional
 import sys
 sys.path.append("./")
 from PuruTorch import Tensor
-from PuruTorch.nn.activation import *
 from PuruTorch.models import MLP
-from PuruTorch.nn.loss import MSELoss
+from PuruTorch.nn import MSELoss, ReLU
 from PuruTorch.optim import SGD, Adam, AdamW
 import numpy as np
 from helpers import *
-from torchviz import make_dot
 
 class pyt_MLP(torch.nn.Module):
     '''Reference model to test correctness'''

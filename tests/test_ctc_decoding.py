@@ -4,7 +4,7 @@ import traceback
 import json
 import pickle
 sys.path.append("./")
-from PuruTorch.nn.CTCDecoding import GreedySearchDecoder, BeamSearchDecoder
+from PuruTorch.nn import GreedySearchDecoder, BeamSearchDecoder
 
 
 # Test object to be used for other homeworks

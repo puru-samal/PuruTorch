@@ -3,7 +3,7 @@ from typing import List, Optional
 import sys
 sys.path.append("./")
 from PuruTorch import Tensor
-from PuruTorch.nn.convtranspose2d import *
+from PuruTorch.nn import ConvTranspose2D
 import numpy as np
 from helpers import *
 import os

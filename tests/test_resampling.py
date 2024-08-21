@@ -3,7 +3,7 @@ from typing import List, Optional
 import sys
 sys.path.append("./")
 from PuruTorch import Tensor
-from PuruTorch.nn.resampling import *
+from PuruTorch.nn import Upsample1D, Downsample1D, Upsample2D, Downsample2D
 import numpy as np
 from helpers import *
 import os

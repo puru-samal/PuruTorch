@@ -18,6 +18,7 @@ from    test_conv1d import *
 from    test_conv2d import *
 from    test_convtransp1d import *
 from    test_convtransp2d import *
+from    test_dropout import *
 
 
 search_test = SearchTest()
@@ -303,6 +304,24 @@ test_list = {
             'value': 1,
         },
         {
+            'name':    'Reg: Dropout Forward/Backward',
+            'autolab': 'Reg: Dropout Forward/Backward',
+            'handler': test_dropout,
+            'value': 1,
+        },
+        {
+            'name':    'Reg: Dropout1D Forward/Backward',
+            'autolab': 'Reg: Dropout1D Forward/Backward',
+            'handler': test_dropout1d,
+            'value': 1,
+        },
+        {
+            'name':    'Reg: Dropout2D Forward/Backward',
+            'autolab': 'Reg: Dropout2D Forward/Backward',
+            'handler': test_dropout2d,
+            'value': 1,
+        },
+        {
             'name':    'Resampling: Upsample1D Forward/Backward',
             'autolab': 'Resampling: Upsample1D Forward/Backward',
             'handler': test_upsampling1d,
@@ -368,24 +387,6 @@ test_list = {
             'handler': test_grucell,
             'value': 1,
         },
-        {
-            'name':    'Model: MLP Forward/Backward',
-            'autolab': 'Model: MLP Forward/Backward',
-            'handler': test_mlp,
-            'value': 1,
-        },
-        {
-            'name':    'Model: RNNClassifier Forward/Backward',
-            'autolab': 'Model: RNNClassifier Forward/Backward',
-            'handler': test_rnn_classifier,
-            'value': 1,
-        },
-        {
-            'name':    'Model: GRUClassifier Forward/Backward',
-            'autolab': 'Model: GRUClassifier Forward/Backward',
-            'handler': test_gru_classifier,
-            'value': 1,
-        },
     ],
     'optim': [
         {
@@ -404,6 +405,26 @@ test_list = {
             'name':    'Optim: AdamW Step',
             'autolab': 'Optim: AdamW Step',
             'handler': test_optim_adamW,
+            'value': 1,
+        },
+    ],
+    'model': [
+        {
+            'name':    'Model: MLP Forward/Backward',
+            'autolab': 'Model: MLP Forward/Backward',
+            'handler': test_mlp,
+            'value': 1,
+        },
+        {
+            'name':    'Model: RNNClassifier Forward/Backward',
+            'autolab': 'Model: RNNClassifier Forward/Backward',
+            'handler': test_rnn_classifier,
+            'value': 1,
+        },
+        {
+            'name':    'Model: GRUClassifier Forward/Backward',
+            'autolab': 'Model: GRUClassifier Forward/Backward',
+            'handler': test_gru_classifier,
             'value': 1,
         },
     ],

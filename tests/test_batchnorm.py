@@ -3,12 +3,7 @@ from typing import List, Optional
 import sys
 sys.path.append("./")
 from PuruTorch import Tensor
-from PuruTorch.nn.linear import Linear
-from PuruTorch.nn.conv2d import Conv2D
-from PuruTorch.nn import activation
-from PuruTorch.nn.batchnorm1d import *
-from PuruTorch.nn.batchnorm2d import *
-from PuruTorch.nn.loss import *
+from PuruTorch.nn import Linear, Conv2D, ReLU, BatchNorm1D, BatchNorm2D, MSELoss
 import numpy as np
 from helpers import *
 
@@ -28,7 +23,7 @@ def test_batchnorm1d():
         pyt_t = torch.FloatTensor(npt)
 
         usr_layer = Linear(i, i-2)
-        usr_act   = activation.ReLU()
+        usr_act   = ReLU()
         usr_bn    = BatchNorm1D(i-2, eps=0.00001, momentum=0.1)
         usr_criterion = MSELoss(reduction='mean')
 
@@ -135,7 +130,7 @@ def test_batchnorm2d():
         pyt_x = torch.FloatTensor(npx).requires_grad_()
 
         usr_layer = Conv2D(in_c, out_c, kernel, stride=stride)
-        usr_act   = activation.ReLU()
+        usr_act   = ReLU()
         usr_bn    = BatchNorm2D(num_features=out_c, eps=0.00001, momentum=0.1)
 
         usr_layer.train()
