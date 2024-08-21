@@ -297,6 +297,12 @@ test_list = {
             'value': 1,
         },
         {
+            'name':    'Reg: Batchnorm2d Forward/Backward',
+            'autolab': 'Reg: Batchnorm2d Forward/Backward',
+            'handler': test_batchnorm2d,
+            'value': 1,
+        },
+        {
             'name':    'Resampling: Upsample1D Forward/Backward',
             'autolab': 'Resampling: Upsample1D Forward/Backward',
             'handler': test_upsampling1d,

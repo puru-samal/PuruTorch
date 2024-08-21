@@ -488,7 +488,10 @@ class Mean(Function):
         else: # Scalar
             a_grad = grad_output.data
         
-        denom = np.prod(a.shape) if self.ctx.axis is None else np.prod(a.shape[self.ctx.axis])
+        # NOTE: Handled case for when ctx.axis is a tuple
+        denom = np.prod(a.shape) if self.ctx.axis is None else \
+                (np.prod(a.shape[self.ctx.axis]) if not isinstance(self.ctx.axis, tuple) else \
+                 np.prod(tuple(a.shape[i] for i in self.ctx.axis)))
         a_grad = a_grad * np.ones_like(a.data) / denom
         return [Tensor.tensor(a_grad)]
     
@@ -527,7 +530,10 @@ class Var(Function):
             a_grad = grad_output.data * np.ones_like(a.data)
         
         a_grad *=  2. * (a.data - np.mean(a.data, axis=self.ctx.axis, keepdims=True))
-        denom = np.prod(a.shape) if self.ctx.axis is None else np.prod(a.shape[self.ctx.axis])
+        # NOTE: Handled case for when ctx.axis is a tuple
+        denom = np.prod(a.shape) if self.ctx.axis is None else \
+                (np.prod(a.shape[self.ctx.axis]) if not isinstance(self.ctx.axis, tuple) else \
+                 np.prod(tuple(a.shape[i] for i in self.ctx.axis)))
         a_grad /= (denom - self.ctx.corr) 
         return [Tensor.tensor(a_grad)]
 

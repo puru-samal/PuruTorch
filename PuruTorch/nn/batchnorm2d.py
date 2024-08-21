@@ -3,10 +3,10 @@ from .module import Module
 from ..tensor import Tensor, Parameter
 from ..functional import *
 
-class BatchNorm1D(Module):
+class BatchNorm2D(Module):
     """
-    Applies batch normalization over 2D and 3D inputs. 
-    Tested against Pytorch's Batchnorm1D implementation.
+    Applies batch normalization over 4D inputs. 
+    Tested against Pytorch's Batchnorm2D implementation.
     """
     def __init__(self, num_features:int, eps:float=1e-5, momentum:float=0.1):
         super().__init__()
@@ -27,15 +27,15 @@ class BatchNorm1D(Module):
         return self.forward(x)
 
     def forward(self, x: Tensor) -> Tensor:
-        mean = x.mean(axis=0)
-        var = x.var(axis=0, keepdims=False, corr=0)          # Used for output
-        unbiased_var = x.var(axis=0, keepdims=False, corr=1) # Used for moving avg
+        mean = x.mean(axis=(0,2,3))
+        var = x.var(axis=(0,2,3), corr=0)   # Used for output
+        unbiased_var = x.var(axis=(0,2,3), corr=1) # Used for moving avg
         if self.mode == 'train':
             self.running_mean = (1. - self.momentum) * self.running_mean + self.momentum * mean
             self.running_var  = (1. - self.momentum) * self.running_var  + self.momentum * unbiased_var
-            Nx = (x - mean) / (var + self.eps) ** 0.5
+            Nx = (x - mean.reshape(1, -1, 1, 1)) / (var.reshape(1, -1, 1, 1) + self.eps) ** 0.5
         else:
-            Nx = (x - self.running_mean) / (self.running_var + self.eps) ** 0.5
+            Nx = (x - self.running_mean.reshape(1, -1, 1, 1)) / (self.running_var.reshape(1, -1, 1, 1) + self.eps) ** 0.5
         
-        y = Nx * self.gamma + self.beta
+        y = Nx * self.gamma.reshape(1, -1, 1, 1) + self.beta.reshape(1, -1, 1, 1)
         return y
