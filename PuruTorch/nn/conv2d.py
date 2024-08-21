@@ -14,12 +14,12 @@ class Conv2D(Module):
         self.stride       = stride
         self.padding      = padding
 
-        self.W = Parameter(Tensor.random_uniform(-np.sqrt(1 / in_channels),
-                                                np.sqrt(1 / in_channels),
+        self.W = Parameter(Tensor.random_uniform(-np.sqrt(1 / (in_channels * kernel_size)),
+                                                np.sqrt(1 / (in_channels * kernel_size)),
                                                 size=(out_channels, in_channels, kernel_size, kernel_size)))
         
-        self.b = Parameter(Tensor.random_uniform(-np.sqrt(1 / in_channels),
-                                                np.sqrt(1 / in_channels),
+        self.b = Parameter(Tensor.random_uniform(-np.sqrt(1 / (in_channels * kernel_size)),
+                                                np.sqrt(1 / (in_channels * kernel_size)),
                                                 size=(out_channels,)))
         
 

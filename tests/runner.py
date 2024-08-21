@@ -16,6 +16,8 @@ from    test_ctc_decoding import *
 from    test_resampling import *
 from    test_conv1d import *
 from    test_conv2d import *
+from    test_convtransp1d import *
+from    test_convtransp2d import *
 
 
 search_test = SearchTest()
@@ -334,6 +336,18 @@ test_list = {
             'name':    'Layer: Conv2D Forward/Backward',
             'autolab': 'Layer: Conv2D Forward/Backward',
             'handler': test_conv2d,
+            'value': 1,
+        },
+        {
+            'name':    'Layer: ConvTranspose1D Forward/Backward',
+            'autolab': 'Layer: ConvTranspose1D Forward/Backward',
+            'handler': test_convtransp1d,
+            'value': 1,
+        },
+        {
+            'name':    'Layer: ConvTranspose2D Forward/Backward',
+            'autolab': 'Layer: ConvTranspose2D Forward/Backward',
+            'handler': test_convtransp2d,
             'value': 1,
         },
         {
