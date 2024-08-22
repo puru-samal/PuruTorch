@@ -19,7 +19,7 @@ from    test_conv2d import *
 from    test_convtransp1d import *
 from    test_convtransp2d import *
 from    test_dropout import *
-
+from    test_pool import *
 
 search_test = SearchTest()
 
@@ -346,6 +346,30 @@ test_list = {
             'value': 1,
         },
         {
+            'name':    'Pooling: MaxPool1D Forward/Backward',
+            'autolab': 'Pooling: MaxPool1D Forward/Backward',
+            'handler': test_maxpool1d,
+            'value': 1,
+        },
+        {
+            'name':    'Pooling: MeanPool1D Forward/Backward',
+            'autolab': 'Pooling: MeanPool1D Forward/Backward',
+            'handler': test_meanpool1d,
+            'value': 1,
+        },
+        {
+            'name':    'Pooling: MaxPool2D Forward/Backward',
+            'autolab': 'Pooling: MaxPool2D Forward/Backward',
+            'handler': test_maxpool2d,
+            'value': 1,
+        },
+        {
+            'name':    'Pooling: MeanPool2D Forward/Backward',
+            'autolab': 'Pooling: MeanPool2D Forward/Backward',
+            'handler': test_meanpool2d,
+            'value': 1,
+        },
+        {
             'name':    'Layer: Linear Forward/Backward',
             'autolab': 'Layer: Linear Forward/Backward',
             'handler': test_linear,
@@ -413,6 +437,18 @@ test_list = {
             'name':    'Model: MLP Forward/Backward',
             'autolab': 'Model: MLP Forward/Backward',
             'handler': test_mlp,
+            'value': 1,
+        },
+        {
+            'name':    'Model: CNN Forward/Backward',
+            'autolab': 'Model: CNN Forward/Backward',
+            'handler': test_cnn,
+            'value': 1,
+        },
+        {
+            'name':    'Model: ResBlock Forward/Backward',
+            'autolab': 'Model: ResBlock Forward/Backward',
+            'handler': test_resblock,
             'value': 1,
         },
         {

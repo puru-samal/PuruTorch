@@ -1,6 +1,6 @@
 from ..nn.module import Module
-from ..nn import Linear
-from ..nn.activation import *
+from ..nn import Linear, Identity
+from ..tensor import Tensor
 from typing import List, Optional
 
 class MLP(Module):

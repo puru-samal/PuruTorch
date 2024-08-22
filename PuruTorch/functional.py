@@ -768,6 +768,7 @@ class dropout(Function):
     def forward(self, x:Tensor, p:float, train:bool) -> Tensor:
         self.ctx.save_for_backward(x)
         self.ctx.train = train
+        self.ctx.p = p
         if train:
             mask = np.random.binomial(1., 1. - p, x.shape)
             self.ctx.mask = mask 
@@ -779,7 +780,7 @@ class dropout(Function):
     
     def backward(self, grad_output:Tensor) -> List[Tensor]:
         if self.ctx.train:
-            return [Tensor.tensor(grad_output.data * self.ctx.mask)]
+            return [Tensor.tensor(grad_output.data * self.ctx.mask / (1. - self.ctx.p))]
         else:
             x = self.ctx.saved_tensors[0]
             return [Tensor.ones_like(x)]
@@ -859,16 +860,16 @@ class Pad1D(Function):
     
     def forward(self, A:Tensor, padding:int=0) -> Tensor:
         self.ctx.save_for_backward(A)
-        self.padding = padding # for backward
-        if self.padding > 0:
-            padded_A = np.pad(A.data, pad_width=((0,), (0,), (self.padding,)), mode='constant')
+        self.ctx.padding = padding # for backward
+        if padding > 0:
+            padded_A = np.pad(A.data, pad_width=((0,), (0,), (padding,)), mode='constant')
         else:
             padded_A = A.data.copy()
         return Tensor(padded_A, A.requires_grad, self if A.requires_grad else None)
     
     def backward(self, grad_output:Tensor) -> List[Tensor]:
-        if self.padding > 0:
-            dLdA = grad_output.data[:, :, self.padding:(grad_output.shape[-1]-self.padding)]
+        if self.ctx.padding > 0:
+            dLdA = grad_output.data[:, :, self.ctx.padding:(grad_output.shape[-1]-self.ctx.padding)]
         else:
             dLdA = grad_output.data.copy()
         return [Tensor.tensor(dLdA)]
@@ -943,18 +944,18 @@ class Pad2D(Function):
     
     def forward(self, A:Tensor, padding:int=0) -> Tensor:
         self.ctx.save_for_backward(A)
-        self.padding = padding # for backward
-        if self.padding > 0:
-            padded_A = np.pad(A.data, pad_width=((0,), (0,), (self.padding,), (self.padding,)), mode='constant')
+        self.ctx.padding = padding # for backward
+        if  padding > 0:
+            padded_A = np.pad(A.data, pad_width=((0,), (0,), (padding,), (padding,)), mode='constant')
         else:
             padded_A = A.data.copy()
         return Tensor(padded_A, A.requires_grad, self if A.requires_grad else None)
     
     def backward(self, grad_output:Tensor) -> List[Tensor]:
-        if self.padding > 0:
+        if self.ctx.padding > 0:
             dLdA = grad_output.data[:, :, 
-                                    self.padding:(grad_output.shape[-1]-self.padding), 
-                                    self.padding:(grad_output.shape[-1]-self.padding)]
+                                    self.ctx.padding:(grad_output.shape[-1]-self.ctx.padding), 
+                                    self.ctx.padding:(grad_output.shape[-1]-self.ctx.padding)]
         else:
             dLdA = grad_output.data.copy()
         return [Tensor.tensor(dLdA)]
@@ -1022,4 +1023,196 @@ class Conv2D_stride1(Function):
 
         return [Tensor.tensor(dLdA), Tensor.tensor(dLdW), Tensor.tensor(dLdb)]
 
+# ------------------------------------------
+#  Pool Functionals
+# ------------------------------------------
 
+class MaxPool1D_stride1(Function):
+    def __call__(self, A:Tensor, kernel:int) -> Tensor:
+        return self.forward(A, kernel)
+
+    def forward(self, A:Tensor, kernel:int) -> Tensor:
+        """
+        Argument:
+            A (Tensor): (batch_size, in_channels, input_width)
+        Return:
+            Z (Tensor): (batch_size, out_channels, output_width)
+        """
+
+        self.ctx.save_for_backward(A)
+        N, C_in, W_in = A.shape
+        C_out = C_in
+        W_out = W_in - kernel + 1
+
+        self.ctx.maxindex = np.empty((N, C_out, W_out), dtype=tuple)
+        Z = np.zeros((N, C_out, W_out))
+
+        for batch in range(N):
+            for ch in range(C_out):
+                for w in range(W_out):
+                    scan = A.data[batch, ch, w:w+kernel]
+                    Z[batch, ch, w] = np.max(scan)
+                    self.ctx.maxindex[batch, ch, w] = np.unravel_index(np.argmax(scan), scan.shape)
+                    self.ctx.maxindex[batch, ch, w] = tuple(np.add((w), self.ctx.maxindex[batch, ch, w]))
+
+        return Tensor(Z, A.requires_grad, self if A.requires_grad else None)
+
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
+        """
+        Argument:
+            grad_output (Tensor): (batch_size, out_channels, output_width)
+        Return:
+            dLdA (Tensor): (batch_size, in_channels, input_width)
+        """
+        A = self.ctx.saved_tensors[0]
+        dLdA = np.zeros_like(A.data)
+        N, C_out, W_out = grad_output.shape
+
+        for batch in range(N):
+            for ch in range(C_out):
+                for w in range(W_out):
+                    i1  = self.ctx.maxindex[batch, ch, w]
+                    dLdA[batch, ch, i1] = grad_output.data[batch, ch, w]
+        return [Tensor.tensor(dLdA)]
+
+
+class MeanPool1D_stride1(Function):
+    def __call__(self, A:Tensor, kernel:int) -> Tensor:
+        return self.forward(A, kernel)
+
+    def forward(self, A:Tensor, kernel:int) -> Tensor:
+        """
+        Argument:
+            A (Tensor): (batch_size, in_channels, input_width)
+        Return:
+            Z (Tensor): (batch_size, out_channels, output_width)
+        """
+        self.ctx.save_for_backward(A)
+        self.ctx.kernel = kernel
+        N, C_in, W_in = A.shape
+        C_out = C_in
+        W_out = W_in - kernel + 1
+        Z = np.zeros((N, C_out, W_out))
+
+        for w in range(W_out):
+            Z[:, :, w] = np.mean(A.data[:, :, w:w+kernel], axis=2)
+
+        return Tensor(Z, A.requires_grad, self if A.requires_grad else None)
+
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
+        """
+        Argument:
+            grad_output (Tensor): (batch_size, out_channels, output_width)
+        Return:
+            dLdA (Tensor): (batch_size, in_channels, input_width)
+        """
+        A = self.ctx.saved_tensors[0]
+        dLdA = np.zeros_like(A.data)
+        N, C_out, W_out = grad_output.shape
+
+        pwidths = ((0,), (0,), (self.ctx.kernel-1,))
+        # Pad with zeroes to shape match
+        pdLdZ = np.pad(grad_output.data, pad_width=pwidths, mode='constant')
+
+        for w in range(W_out):
+            dLdA[:, :, w] = np.mean(pdLdZ[:, :, w:w+self.ctx.kernel], axis=2)
+                
+        return [Tensor.tensor(dLdA)]
+       
+
+class MaxPool2D_stride1(Function):
+    def __call__(self, A:Tensor, kernel:int) -> Tensor:
+        return self.forward(A, kernel)
+
+    def forward(self, A:Tensor, kernel:int) -> Tensor:
+        """
+        Argument:
+            A (Tensor): (batch_size, in_channels, input_height,  input_width)
+        Return:
+            Z (Tensor): (batch_size, out_channels, output_height, output_height)
+        """
+
+        self.ctx.save_for_backward(A)
+        N, C_in, H_in, W_in = A.shape
+        C_out = C_in
+        H_out, W_out = H_in - kernel + 1, W_in - kernel + 1
+
+        self.ctx.maxindex = np.empty((N, C_out, H_out, W_out), dtype=tuple)
+        Z = np.zeros((N, C_out, H_out, W_out))
+
+        for batch in range(N):
+            for ch in range(C_out):
+                for h in range(H_out):
+                    for w in range(W_out):
+                        scan = A.data[batch, ch, h:h+kernel, w:w+kernel]
+                        Z[batch, ch, h, w] = np.max(scan)
+                        self.ctx.maxindex[batch, ch, h, w] = np.unravel_index(np.argmax(scan), scan.shape)
+                        self.ctx.maxindex[batch, ch, h, w] = tuple(np.add((h, w), self.ctx.maxindex[batch, ch, h, w]))
+
+        return Tensor(Z, A.requires_grad, self if A.requires_grad else None)
+
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
+        """
+        Argument:
+            grad_output (Tensor): (batch_size, out_channels, output_height, output_width)
+        Return:
+            dLdA (Tensor): (batch_size, in_channels, input_height, input_width)
+        """
+        A = self.ctx.saved_tensors[0]
+        dLdA = np.zeros_like(A.data)
+        N, C_out, H_out, W_out = grad_output.shape
+
+        for batch in range(N):
+            for ch in range(C_out):
+                for h in range(H_out):
+                    for w in range(W_out):
+                        i1, i2 = self.ctx.maxindex[batch, ch, h, w]
+                        dLdA[batch, ch, i1, i2] = grad_output.data[batch, ch, h, w]
+        return [Tensor.tensor(dLdA)]
+
+
+class MeanPool2D_stride1(Function):
+    def __call__(self, A:Tensor, kernel:int) -> Tensor:
+        return self.forward(A, kernel)
+
+    def forward(self, A:Tensor, kernel:int) -> Tensor:
+        """
+        Argument:
+            A (Tensor): (batch_size, in_channels, input_height,  input_width)
+        Return:
+            Z (Tensor): (batch_size, out_channels, output_height, output_width)
+        """
+        self.ctx.save_for_backward(A)
+        self.ctx.kernel = kernel
+        N, C_in, H_in, W_in = A.shape
+        C_out = C_in
+        H_out, W_out = H_in - kernel + 1, W_in - kernel + 1
+        Z = np.zeros((N, C_out, H_out, W_out))
+
+        for h in range(H_out):
+            for w in range(W_out):
+                Z[:, :, h, w] = np.mean(A.data[:, :, h:h+kernel, w:w+kernel], axis=(2, 3))
+
+        return Tensor(Z, A.requires_grad, self if A.requires_grad else None)
+
+    def backward(self, grad_output:Tensor) -> List[Tensor]:
+        """
+        Argument:
+            grad_output (Tensor): (batch_size, out_channels, output_height, output_width)
+        Return:
+            dLdA (Tensor): (batch_size, in_channels, input_height, input_width)
+        """
+        A = self.ctx.saved_tensors[0]
+        dLdA = np.zeros_like(A.data)
+        N, C_out, H_out, W_out = grad_output.shape
+
+        pwidths = ((0,), (0,), (self.ctx.kernel-1,), (self.ctx.kernel-1,))
+        # Pad with zeroes to shape match
+        pdLdZ = np.pad(grad_output.data, pad_width=pwidths, mode='constant')
+
+        for h in range(H_out):
+            for w in range(W_out):
+                dLdA[:, :, h, w] = np.mean(pdLdZ[:, :, h:h+self.ctx.kernel, w:w+self.ctx.kernel], axis=(2, 3))
+                
+        return [Tensor.tensor(dLdA)]
+       
