@@ -1,5 +1,5 @@
 from .module import Module
-from ..tensor import Tensor, Parameter
+from ..tensor import Tensor
 from . import act_functional as F
 
 '''

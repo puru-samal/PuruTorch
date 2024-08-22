@@ -1,4 +1,3 @@
-import numpy as np
 from .module import Module
 from . import conv_functional as F
 from ..tensor import Tensor

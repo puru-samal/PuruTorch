@@ -1,7 +1,7 @@
 import numpy as np
 from ..tensor import Tensor
-from ..utils import Function, unbroadcast
-from typing import Tuple, List, Union, Optional, Literal
+from ..utils import Function
+from typing import List, Union, Literal
 
 # ------------------------------------------
 #  Loss Functional
@@ -19,29 +19,30 @@ class SoftmaxCrossEntropy(Function):
     def forward(self, predictions: Tensor, targets: Tensor, 
                 reduction: Union[None, Literal['mean', 'sum']]="mean") -> Tensor:
         super().forward()
-        self.ctx.save_for_backward(predictions)
-        self.ctx.reduction = reduction
-        self.ctx.targets = targets.data 
-        self.ctx.softmax = np.exp(predictions.data) / np.sum(np.exp(predictions.data), axis=-1, keepdims=True)
-        data = np.sum(-targets.data * np.log(self.ctx.softmax), axis=-1)
+        softmax = np.exp(predictions.data) / np.sum(np.exp(predictions.data), axis=-1, keepdims=True)
+        data = np.sum(-targets.data * np.log(softmax), axis=-1)
         if reduction is None:
             data = data
+            N = 1
         elif reduction == "mean":
             data = np.mean(data)
             *N_dim, _ = predictions.shape
-            self.ctx.N = np.prod(N_dim)
+            N = np.prod(N_dim)
         elif reduction == "sum":
             data = np.sum(data)
-        return Tensor(data, predictions.requires_grad, self if predictions.requires_grad else None)
+            N = 1
+        requires_grad = predictions.requires_grad
+        if requires_grad:
+            self.ctx.save_for_backward(predictions)
+            self.ctx.reduction = reduction
+            self.ctx.targets = targets.data 
+            self.ctx.softmax = softmax
+            self.ctx.N = N
+        return Tensor(data, requires_grad, self if requires_grad else None)
     
     def backward(self, grad_output: Tensor) -> List[Tensor]:
         super().backward()
-        if self.ctx.reduction is None:
-            a_grad = grad_output.data * (self.ctx.softmax - self.ctx.targets)
-        elif self.ctx.reduction == "mean":
-            a_grad = grad_output.data * (self.ctx.softmax - self.ctx.targets) / self.ctx.N
-        elif self.ctx.reduction == "sum":
-            a_grad = grad_output.data * (self.ctx.softmax - self.ctx.targets)
+        a_grad = grad_output.data * (self.ctx.softmax - self.ctx.targets) / self.ctx.N
         return [Tensor.tensor(a_grad)]
 
 class _CTC(object):
@@ -254,22 +255,14 @@ class CTCLoss(Function):
             avg. divergence between the posterior probability and the target
 
         """
-
-        # No need to modify
-        self.ctx.save_for_backward(logits)
-        self.ctx.input_lengths = input_lengths.data
-        self.ctx.target_lengths = target_lengths.data
-
+        super().forward()
         ctc = _CTC(BLANK=BLANK)
-
         # IMP:
         # Output losses should be the mean loss over the batch
-
-        # No need to modify
         B, _ = target.shape
         total_loss = np.zeros(B)
-        self.ctx.extended_symbols = []
-        self.ctx.gammas = []
+        extended_symbols = []
+        gammas = []
 
         for batch_itr in range(B):
             # -------------------------------------------->
@@ -290,21 +283,29 @@ class CTCLoss(Function):
             # <---------------------------------------------
             target_t = target[batch_itr, :target_lengths[batch_itr].data].data
             logits_t = logits[:input_lengths[batch_itr].data, batch_itr].data
-            extended_symbols, skip_connect = ctc.extend_target_with_blank(target_t)
-            alpha = ctc.get_forward_probs(logits_t, extended_symbols, skip_connect)
-            beta = ctc.get_backward_probs(logits_t, extended_symbols, skip_connect)
+            extended_symbol, skip_connect = ctc.extend_target_with_blank(target_t)
+            alpha = ctc.get_forward_probs(logits_t, extended_symbol, skip_connect)
+            beta = ctc.get_backward_probs(logits_t, extended_symbol, skip_connect)
             gamma = ctc.get_posterior_probs(alpha, beta)
             for r in range(gamma.shape[1]):
-                total_loss[batch_itr] -= np.sum(gamma[:, r] * np.log(logits_t[:, extended_symbols[r]]))
-            self.ctx.gammas.append(gamma)
-            self.ctx.extended_symbols.append(extended_symbols)
+                total_loss[batch_itr] -= np.sum(gamma[:, r] * np.log(logits_t[:, extended_symbol[r]]))
+            gammas.append(gamma)
+            extended_symbols.append(extended_symbol)
+
+        requires_grad = logits.requires_grad
+        if requires_grad:
+            self.ctx.save_for_backward(logits)
+            self.ctx.input_lengths = input_lengths.data
+            self.ctx.target_lengths = target_lengths.data
+            self.ctx.gammas = gammas
+            self.ctx.extended_symbols = extended_symbols
 
         if reduction is None:
-            return Tensor.tensor(total_loss)
+            return Tensor.tensor(total_loss, requires_grad, self if requires_grad else None)
         elif reduction == "sum":
-            return Tensor.tensor(np.sum(total_loss))
+            return Tensor.tensor(np.sum(total_loss), requires_grad, self if requires_grad else None)
         elif reduction == "mean":
-            return Tensor(np.sum(total_loss) / B, logits.requires_grad, self if logits.requires_grad else None)
+            return Tensor(np.sum(total_loss) / B, requires_grad, self if requires_grad else None)
     
 
     def backward(self, grad_output:Tensor):
@@ -335,7 +336,7 @@ class CTCLoss(Function):
             derivative of divergence w.r.t the input symbols at each time
 
         """
-
+        super().backward()
         # No need to modify
         logits = self.ctx.saved_tensors[0]
         T, B, C = logits.shape

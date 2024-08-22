@@ -1,5 +1,4 @@
-from ..nn import Module, Identity, Tanh, ReLU, Sigmoid, Linear, Conv1D
-from ..tensor import Tensor
+from ..nn import Module, Tanh, ReLU, Sigmoid, Linear, Conv1D
 
 class CNN(Module):
     """

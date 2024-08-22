@@ -5,9 +5,15 @@ from typing import Tuple, Literal
 class ContextManager:
     """
     Helper class to save Tensors required for bachward computations during the forward pass.
-    -> store tensors for backprop with:
+    During forward calls:
+    -> Store tensors for backprop with:
         ctx.save_for_backward(tensor)
-    -> store other parameters useful for gradient computation (eg, shape..) with:
+    -> Store other parameters useful for gradient computation (eg, shape..) with:
+        ctx.attr = attr
+    During backward calls:
+    -> Access stored tensors by indexing into 
+        ctx.saved_tensors
+    -> Access other parameters useful for gradient computation (eg, shape..) with:
         ctx.attr = attr
     """   
     def __init__(self):
@@ -52,6 +58,8 @@ class Function:
         if self.debug and (self.debug_mode=='bwd' or self.debug_mode=='both'):
             print("")
             print(self.__class__.__name__+"_backward")
+        if len(self.ctx.saved_tensors) == 0:
+            raise RuntimeError("Called backward with no saved Tensors")
         return
 
 

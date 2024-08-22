@@ -12,7 +12,7 @@ class Module:
 
     def parameters(self) -> List[Parameter]:
         '''
-        Returns all model parameters in a list. Iterates over each item in self.__dict__,
+        Returns all learnable model parameters in a list. Iterates over each item in self.__dict__,
         and returns every Parameter object.
         '''
         params = []

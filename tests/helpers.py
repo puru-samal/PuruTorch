@@ -1,6 +1,4 @@
 import numpy as np
-import json
-import sys
 import traceback
 
 # ANSI escape codes for text color

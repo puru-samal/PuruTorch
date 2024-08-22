@@ -1,6 +1,5 @@
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-import json
 import sys
 sys.path.append("./")
 from PuruTorch.nn import Attention

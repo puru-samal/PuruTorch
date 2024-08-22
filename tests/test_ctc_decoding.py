@@ -1,8 +1,6 @@
 import numpy as np
 import sys, os
 import traceback
-import json
-import pickle
 sys.path.append("./")
 from PuruTorch.nn import GreedySearchDecoder, BeamSearchDecoder
 

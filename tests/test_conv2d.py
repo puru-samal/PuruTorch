@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from typing import List, Optional
 import sys
 sys.path.append("./")
 from PuruTorch import Tensor

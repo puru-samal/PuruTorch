@@ -1,5 +1,4 @@
 import numpy as np
-from ..tensor import Tensor
 from typing import Tuple, List
 
 # NOTE: Works on np.ndarrays. To use with Tensor pass Tensor.data

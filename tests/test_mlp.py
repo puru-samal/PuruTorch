@@ -3,7 +3,7 @@ from typing import List, Optional
 import sys
 sys.path.append("./")
 from PuruTorch import Tensor
-from PuruTorch.nn import Linear, ReLU
+from PuruTorch.nn import ReLU
 from PuruTorch.models import MLP
 import numpy as np
 from helpers import *

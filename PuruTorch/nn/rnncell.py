@@ -1,5 +1,5 @@
 from .module import Module
-from ..tensor import Tensor, Parameter
+from ..tensor import Tensor
 from .linear import Linear
 from .activation import * 
 from typing import Union, Optional

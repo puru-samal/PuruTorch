@@ -8,7 +8,6 @@ from PuruTorch.models import CNN
 from PuruTorch.nn import Conv1D
 import numpy as np
 from helpers import *
-import os
 
 # Reference Pytorch CNN Model
 class ReferenceModel(nn.Module):
