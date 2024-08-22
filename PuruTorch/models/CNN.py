@@ -3,7 +3,10 @@ from ..tensor import Tensor
 
 class CNN(Module):
     """
-    A simple convolutional neural network
+    A simple convolutional neural network built with PuruTorch library.
+    Network output and parameters are compared with
+    equivalent PyTorch model to verify correctness.
+    '''
     """
     def __init__(self, in_width=128, conv_dims=[24, 56, 28, 14], kernel_sizes=[5, 6, 2], strides=[1, 2, 2], 
                  linear_dim=10, activations=[Tanh(), ReLU(), Sigmoid()]):

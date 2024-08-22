@@ -1,7 +1,6 @@
 from ..tensor import Tensor
-from .. import functional as F
+from . import loss_functional as F
 from typing import Union, Literal
-from ._CTC import _CTCLoss
 
 class Loss():
     """
@@ -63,5 +62,5 @@ class CTCLoss(Loss):
         return self.forward(logits, target, input_lengths, target_lengths)
 
     def forward(self, logits:Tensor, target:Tensor, input_lengths:Tensor, target_lengths:Tensor) -> Tensor:
-        RCTC = _CTCLoss()(logits, target, input_lengths, target_lengths, self.BLANK, self.reduction)
+        RCTC = F.CTCLoss()(logits, target, input_lengths, target_lengths, self.BLANK, self.reduction)
         return RCTC

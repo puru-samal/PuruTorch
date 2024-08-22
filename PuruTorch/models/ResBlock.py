@@ -2,7 +2,6 @@ from ..nn import Module, Identity, ReLU, BatchNorm2D, Conv2D
 from ..tensor import Tensor
 
 class ConvBn2D(Module):
-
     def __init__(self, in_channels:int, out_channels:int, kernel_size:int, stride:int=1, padding:int=0) -> None:
         super().__init__()
         self.conv = Conv2D(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
@@ -14,11 +13,13 @@ class ConvBn2D(Module):
 
 
 class ResBlock(Module):
+    '''
+    A Residual block built with PuruTorch library.
+    Network output and parameters are compared with
+    equivalent PyTorch model to verify correctness.
+    '''
     def __init__(self, in_channels, out_channels, kernel_size, stride=3, padding=1):
-        super().__init__()
-
-        ##self.conv1 = 
-        
+        super().__init__()        
         self.cbn1 = ConvBn2D(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
         self.cbn2 = ConvBn2D(out_channels, out_channels, kernel_size=kernel_size, stride=1, padding=padding)
         

@@ -1,6 +1,6 @@
 from .module import Module
 from ..tensor import Tensor
-from .. import functional as F
+from . import dropout_functional as F
 
 class Dropout(Module):
     ''' Randomly zeros out elements in an input tensor'''

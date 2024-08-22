@@ -5,7 +5,7 @@ from typing import List, Optional
 
 class RNNClassifier(Module):
     """
-    A RNN Classifier Model build with PuruTorch library.
+    A RNN Classifier Model built with PuruTorch library.
     Applies a  multi-layer Elman RNN with non-linearity to an input sequence,
     Output from last layer, last timestep is passed to a linear classifier.
     Network output and parameters are compared with

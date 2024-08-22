@@ -5,7 +5,7 @@ from typing import List, Optional
 
 class MLP(Module):
     """
-    A MLP model build with PuruTorch library.
+    A MLP model built with PuruTorch library.
     Network output and parameters are compared with
     equivalent PyTorch model to verify correctness.
     """    

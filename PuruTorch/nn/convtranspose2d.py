@@ -1,8 +1,7 @@
 import numpy as np
 from .module import Module
-from .resampling import *
+from . import conv_functional as F
 from ..tensor import Tensor, Parameter
-from ..functional import *
 
 class ConvTranspose2D(Module):
     '''Applies a 2D transposed convolution operator over an input image composed of several input planes.'''
@@ -31,8 +30,8 @@ class ConvTranspose2D(Module):
         if not is_batched:
             x = x.unsqueeze(0)
 
-        y  = Upsample2D()(x, self.factor)
-        y  = Conv2D_stride1()(y, self.W, self.b)
+        y  = F.Upsample2D()(x, self.factor)
+        y  = F.Conv2D_stride1()(y, self.W, self.b)
         
         if not is_batched:
             y = y.squeeze(0)

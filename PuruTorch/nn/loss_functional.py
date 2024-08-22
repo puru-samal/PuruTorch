@@ -1,14 +1,53 @@
 import numpy as np
-from typing import List, Union, Literal
-from ..utils import Function
 from ..tensor import Tensor
+from ..utils import Function, unbroadcast
+from typing import Tuple, List, Union, Optional, Literal
 
-'''
-Helper functions to compute CTCLoss
-'''
+# ------------------------------------------
+#  Loss Functional
+# ------------------------------------------
+
+class SoftmaxCrossEntropy(Function):
+    """
+    An explicit SoftmaxCrossEntropy functional to reuse values computed in forward.
+    """    
+
+    def __call__(self, predictions: Tensor, targets: Tensor, 
+                 reduction: Union[None, Literal['mean', 'sum']]="mean") -> Tensor:
+        return self.forward(predictions, targets, reduction)
+
+    def forward(self, predictions: Tensor, targets: Tensor, 
+                reduction: Union[None, Literal['mean', 'sum']]="mean") -> Tensor:
+        super().forward()
+        self.ctx.save_for_backward(predictions)
+        self.ctx.reduction = reduction
+        self.ctx.targets = targets.data 
+        self.ctx.softmax = np.exp(predictions.data) / np.sum(np.exp(predictions.data), axis=-1, keepdims=True)
+        data = np.sum(-targets.data * np.log(self.ctx.softmax), axis=-1)
+        if reduction is None:
+            data = data
+        elif reduction == "mean":
+            data = np.mean(data)
+            *N_dim, _ = predictions.shape
+            self.ctx.N = np.prod(N_dim)
+        elif reduction == "sum":
+            data = np.sum(data)
+        return Tensor(data, predictions.requires_grad, self if predictions.requires_grad else None)
+    
+    def backward(self, grad_output: Tensor) -> List[Tensor]:
+        super().backward()
+        if self.ctx.reduction is None:
+            a_grad = grad_output.data * (self.ctx.softmax - self.ctx.targets)
+        elif self.ctx.reduction == "mean":
+            a_grad = grad_output.data * (self.ctx.softmax - self.ctx.targets) / self.ctx.N
+        elif self.ctx.reduction == "sum":
+            a_grad = grad_output.data * (self.ctx.softmax - self.ctx.targets)
+        return [Tensor.tensor(a_grad)]
 
 class _CTC(object):
-    ''' Helper object'''
+    '''
+    Helper functions to compute CTCLoss
+    '''
     def __init__(self, BLANK:int=0):
         """
         Argument(s)
@@ -175,7 +214,7 @@ class _CTC(object):
         return gamma / sumgamma.reshape(-1, 1)
 
 
-class _CTCLoss(Function):
+class CTCLoss(Function):
     '''
     The Function class used to compute CTCLoss. Called by CTCLoss in nn.Loss
     '''

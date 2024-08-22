@@ -1,6 +1,12 @@
 from .module import Module
 from ..tensor import Tensor, Parameter
-from .. import functional as F
+from . import act_functional as F
+
+'''
+Activation functions superclassed by module.
+Inended to be composable within modules
+to build networks.
+'''
 
 class Identity(Module):
     """

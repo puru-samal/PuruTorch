@@ -768,3 +768,61 @@ def test_tensor_var_forward():
 def test_tensor_var_backward():
     return test_tensor_var_backward_("var")
 
+#######################
+
+def test_add_fwd_bwd():
+    return test_tensor_add_forward() and test_tensor_add_backward()
+
+def test_neg_fwd_bwd():
+    return test_tensor_neg_forward() and test_tensor_neg_backward()
+
+def test_sub_fwd_bwd():
+    return test_tensor_sub_forward() and test_tensor_sub_backward()
+
+def test_mul_fwd_bwd():
+    return test_tensor_mul_forward() and test_tensor_mul_backward()
+
+def test_div_fwd_bwd():
+    return test_tensor_div_forward() and test_tensor_div_backward()
+
+def test_pow_fwd_bwd():
+    return test_tensor_pow_forward() and test_tensor_pow_backward()
+
+def test_transp_fwd_bwd():
+    return test_tensor_transp_forward() and test_tensor_transp_backward()
+
+def test_reshape_fwd_bwd():
+    return test_tensor_reshape_forward() and test_tensor_reshape_backward()
+
+def test_squeeze_fwd_bwd():
+    return test_tensor_squeeze_forward() and test_tensor_squeeze_backward()
+
+def test_unsqueeze_fwd_bwd():
+    return test_tensor_unsqueeze_forward() and test_tensor_unsqueeze_backward()
+
+def test_matmul_fwd_bwd():
+    return test_tensor_matmul_forward() and test_tensor_matmul_backward()
+
+def test_slice_fwd_bwd():
+    return test_tensor_slice_forward() and test_tensor_slice_backward()
+
+def test_log_fwd_bwd():
+    return test_tensor_log_forward() and test_tensor_log_backward()
+
+def test_exp_fwd_bwd():
+    return test_tensor_exp_forward() and test_tensor_exp_backward()
+
+def test_sum_fwd_bwd():
+    return test_tensor_sum_forward() and test_tensor_sum_backward()
+
+def test_max_fwd_bwd():
+    return test_tensor_max_forward() and test_tensor_max_backward()
+
+def test_mean_fwd_bwd():
+    return test_tensor_mean_forward() and test_tensor_mean_backward()
+
+def test_var_fwd_bwd():
+    return test_tensor_var_forward() and test_tensor_var_backward()
+
+
+

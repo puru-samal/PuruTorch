@@ -1,8 +1,7 @@
 import numpy as np
 from .module import Module
-from .resampling import *
 from ..tensor import Tensor, Parameter
-from ..functional import *
+from . import conv_functional as F
 
 class Conv1D(Module):
     '''Applies a 1D convolution over an input signal composed of several input planes.'''
@@ -32,9 +31,9 @@ class Conv1D(Module):
         if not is_batched:
             x = x.unsqueeze(0)
         
-        y  = Pad1D()(x, self.padding)
-        y  = Conv1D_stride1()(y, self.W, self.b)
-        y  = Downsample1D()(y, self.stride)
+        y  = F.Pad1D()(x, self.padding)
+        y  = F.Conv1D_stride1()(y, self.W, self.b)
+        y  = F.Downsample1D()(y, self.stride)
 
         if not is_batched:
             y = y.squeeze(0)
