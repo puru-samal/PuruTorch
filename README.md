@@ -128,8 +128,6 @@ Usage is similar to PyTorch! Here are some examples:
 
 ## Simple Example:
 
-{% raw %}
-
 ```python
 import PuruTorch as pt
 
@@ -151,11 +149,7 @@ print(y.grad)
 print(z.grad)
 ```
 
-{% endraw %}
-
 ## Complex Example (building a ResBlock):
-
-{% raw %}
 
 ```python
 from PuruTorch import Tensor, Module
@@ -239,8 +233,6 @@ optim.step()
 optim.zero_grad()
 
 ```
-
-{% endraw %}
 
 ## Printing the Computational Graph
 
@@ -646,5 +638,3 @@ ____________________
 | inp1_shape: (10, 3, 26, 26)
 ____________________
 ```
-
-{% endraw %}
