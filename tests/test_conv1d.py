@@ -159,6 +159,3 @@ def test_cnn():
     else:
         print("passed!")
         return True
-
-
-

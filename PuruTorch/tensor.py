@@ -76,16 +76,14 @@ class Tensor :
         
     
     def print_op_tree(self, depth=0,):
-        print( "".join('*' for _ in range(depth)))
+        print( "".join('*' for _ in range(depth))+f" Depth: {depth}")
         print("____________________")
         print(f"| out_shape: {self.shape}")
-        print(f"| out: {self}")
         print(f"| op: {self.grad_fn}")
        
         if not self.grad_fn is None:
             for (i, inp) in enumerate(self.grad_fn.ctx.saved_tensors):
                 print(f"| inp{i+1}_shape: {inp.shape}")
-                print(f"| inp{i+1}: {inp}")
         
         print("____________________")
            

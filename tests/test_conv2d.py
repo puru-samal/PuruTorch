@@ -179,4 +179,3 @@ def test_resblock():
     else:
         print("passed!")
         return True
-    
